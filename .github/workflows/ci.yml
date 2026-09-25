@@ -1,0 +1,40 @@
+name: Backend CI
+
+# Quando é que este pipeline deve correr?
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    # Onde é que vai correr? Num servidor Linux na nuvem da Microsoft
+    runs-on: ubuntu-latest
+    
+    # Define que todos os comandos correm dentro da nossa pasta backend
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+    # 1. Faz o download do teu código para o servidor virtual
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2. Instala o Python 3.10
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    # 3. Instala as dependências que puseste no requirements.txt
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # 4. O momento da verdade: corre os testes automatizados!
+    - name: Run Pytest
+      run: |
+        python -m pytest
