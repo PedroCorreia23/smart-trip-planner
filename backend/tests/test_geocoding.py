@@ -12,6 +12,7 @@ async def test_get_coordinates_success():
     mock_response = Mock()
     mock_response.json.return_value = fake_api_response
     
+    
     # 2. ACT (Agir): Intercetamos o httpx.AsyncClient.get e forçamos a usar a nossa resposta falsa
     with patch("httpx.AsyncClient.get", return_value=mock_response):
         service = GeocodingService()
