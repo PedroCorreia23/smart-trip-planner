@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from app.domain.schemas import TripQuery
+from app.services.geocoding import GeocodingService
 
 app = FastAPI()
 @app.get("/")
@@ -12,5 +13,14 @@ async def health_check():
 
 @app.post("/trips/search")
 async def search_trip(query: TripQuery):
-    return {"message" : "Seacrh is valid!", "data" : "query"}
+    geo_service = GeocodingService()
+    coords =  await geo_service.get_coordinates(query.destination)
+
+    if not coords:
+        raise HTTPException(status_code=404, detail="Destination city not found.")
+    
+    return {"message" : "Trip sucessfully processed",
+             "trip_details" : query,
+              "destination_coordinates" : coords
+    }
 
