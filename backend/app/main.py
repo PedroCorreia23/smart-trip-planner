@@ -2,8 +2,19 @@ from fastapi import FastAPI, HTTPException
 from app.domain.schemas import TripQuery
 from app.services.geocoding import GeocodingService
 from app.services.weather import WeatherService
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# Configuração do CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"], # Permite o teu frontend Vite
+    allow_credentials=True,
+    allow_methods=["*"], # Permite todos os métodos (GET, POST, etc.)
+    allow_headers=["*"],
+)
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
