@@ -2,7 +2,7 @@ import httpx
 
 class GeocodingService:
     async def get_coordinates(self, city_name: str):
-        url = f"https://nominatim.openstreetmap.org/search?q={city_name}&format=json&limit=1" 
+        url = f"https://nominatim.openstreetmap.org/search?q={city_name}&format=json&limit=1&addressdetails=1" 
         headers = {"User-Agent": "SmartTripPlanner/0.1"}
 
         async with httpx.AsyncClient() as client:
@@ -14,5 +14,10 @@ class GeocodingService:
 
             latitude = float(data[0]["lat"])
             longitude = float(data[0]["lon"])
+            country_code = data[0]["address"]["country_code"]
 
-            return {"lat": latitude, "lon": longitude}
+            return {
+                "lat": latitude, 
+                "lon": longitude,
+                "country_code" : country_code
+            }
