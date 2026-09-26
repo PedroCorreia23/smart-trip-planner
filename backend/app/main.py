@@ -3,6 +3,7 @@ from app.domain.schemas import TripQuery
 from app.services.geocoding import GeocodingService
 from app.services.weather import WeatherService
 from fastapi.middleware.cors import CORSMiddleware
+from app.services.currency import CurrencyService
 
 app = FastAPI()
 
@@ -25,9 +26,17 @@ async def health_check():
 
 @app.post("/trips/search")
 async def search_trip(query: TripQuery):
+
     geo_service = GeocodingService()
-    coords =  await geo_service.get_coordinates(query.destination)
+    currency_service = CurrencyService()
     weather_service = WeatherService()
+
+    coords =  await geo_service.get_coordinates(query.destination)
+
+    if not coords:
+        raise HTTPException(status_code=404, detail="Destination city not found.")
+
+    currency = await currency_service.get_currency(coords["country_code"])
 
     weather = await weather_service.get_weather(
         lat=coords["lat"],
@@ -35,13 +44,10 @@ async def search_trip(query: TripQuery):
         start_date=query.start_date,
         end_date=query.end_date
     )
-
-    if not coords:
-        raise HTTPException(status_code=404, detail="Destination city not found.")
     
     return {"message" : "Trip sucessfully processed",
              "trip_details" : query,
               "destination_coordinates" : coords,
-              "weather" : weather
+              "weather" : weather,
+              "currency" : currency
     }
-
