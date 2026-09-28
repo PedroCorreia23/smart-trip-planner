@@ -1,5 +1,7 @@
 import httpx
 from datetime import date
+from app.exceptions import ExternalServiceError
+
 
 class WeatherService:
     async def get_weather(self, lat: float, lon: float, start_date: date, end_date: date):
@@ -11,12 +13,17 @@ class WeatherService:
             f"daily=temperature_2m_max,temperature_2m_min,precipitation_sum&"
             f"timezone=auto"
         )
-        
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            data = response.json()
-            if "daily" in data:
-                return data["daily"]
-            else:
-                return None
-        
+
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                data = response.json()
+                if "daily" in data:
+                    return data["daily"]
+                else:
+                    return None
+        except httpx.HTTPStatusError as exc:
+            raise ExternalServiceError("Weather service returned an HTTP error.") from exc
+        except httpx.RequestError as exc:
+            raise ExternalServiceError("Weather service is unavailable.") from exc
