@@ -1,6 +1,7 @@
-import pytest
+import pytest, httpx
 from unittest.mock import patch, Mock
 from app.services.exchange_rate import ExchangeRateService
+from app.exceptions import ExternalServiceError
 
 # O decorador avisa o Pytest que esta função usa "await"
 @pytest.mark.asyncio
@@ -40,3 +41,17 @@ async def test_get_rate_not_found():
         resultado = await service.get_rate("EUR","USD")
 
     assert resultado is None
+
+@pytest.mark.asyncio
+async def test_get_rate_http_error():
+    request = httpx.Request("GET", "https://api.frankfurter.dev/v2/rate/EUR/USD")
+
+    response = httpx.Response(500, request=request)
+
+    mock_response = Mock()
+    mock_response.raise_for_status.side_effect = httpx.HTTPStatusError("Server error", request=request,response=response)
+
+    with patch("httpx.AsyncClient.get", return_value=mock_response):
+        service = ExchangeRateService()
+        with pytest.raises(ExternalServiceError):
+            await service.get_rate("EUR", "USD")

@@ -1,6 +1,8 @@
-import pytest
+import pytest, httpx
 from unittest.mock import patch, Mock
 from app.services.currency import CurrencyService
+from app.exceptions import ExternalServiceError
+
 
 @pytest.mark.asyncio
 async def test_get_currency_success():
@@ -39,3 +41,18 @@ async def test_get_currency_not_found():
         resultado = await service.get_currency("FR")
 
     assert resultado is None
+
+@pytest.mark.asyncio
+async def test_currency_http_error():
+
+    request = httpx.Request("GET", "https://countries.dev/alpha/FR")
+
+    response = httpx.Response(500, request=request)
+    
+    mock_response = Mock()
+    mock_response.raise_for_status.side_effect = httpx.HTTPStatusError("Server error", request=request,response=response)
+
+    with patch("httpx.AsyncClient.get", return_value=mock_response):
+        service = CurrencyService()
+        with pytest.raises(ExternalServiceError):
+            await service.get_currency("fr")
