@@ -1,8 +1,10 @@
+import pytest, httpx
 from fastapi.testclient import TestClient
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from app.main import app
-
+from app.exceptions import ExternalServiceError
+from app.services.exchange_rate import ExchangeRateService
 client = TestClient(app)
 
 
@@ -88,3 +90,28 @@ def test_search_trip_invalid_dates():
     response = client.post("/trips/search", json=payload)
 
     assert response.status_code == 422
+
+def test_search_trip_external_service_error():
+    payload = {
+        "origin": "Lisboa",
+        "destination": "New York",
+        "start_date": "2026-10-10",
+        "end_date": "2026-10-15"
+    }
+
+    with patch(
+        "app.main.TripSearchUseCase.execute",
+        side_effect=ExternalServiceError(
+            "Weather service is unavailable."
+        )
+    ):
+        response = client.post(
+            "/trips/search",
+            json=payload
+        )
+
+    assert response.status_code == 502
+
+    assert response.json() == {
+        "detail": "An external service is currently unavailable."
+    }
