@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from app.domain.schemas import TripQuery
 from app.services.geocoding import GeocodingService
 from app.services.weather import WeatherService
@@ -6,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.services.currency import CurrencyService
 from app.services.exchange_rate import ExchangeRateService
 from app.application.trip_search import TripSearchUseCase
+from app.exceptions import ExternalServiceError
 
 app = FastAPI()
 
@@ -39,3 +41,12 @@ async def search_trip(query: TripQuery):
 
     return await use_case.execute(query) 
 
+@app.exception_handler(ExternalServiceError)
+async def external_service_error_handler(request: Request, exc: ExternalServiceError):
+    
+    return JSONResponse(
+        status_code=502,
+        content={
+            "detail": "An external service is currently unavailable."
+        }
+    )
