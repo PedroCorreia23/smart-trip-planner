@@ -1,6 +1,7 @@
 import httpx
 from datetime import date
 from app.exceptions import ExternalServiceError
+from app.domain.schemas import WeatherInfo
 
 
 class WeatherService:
@@ -19,10 +20,23 @@ class WeatherService:
                 response = await client.get(url)
                 response.raise_for_status()
                 data = response.json()
-                if "daily" in data:
-                    return data["daily"]
-                else:
+                if "daily" not in data:
                     return None
+                
+                daily = data["daily"]
+                return WeatherInfo(
+                    time=daily["time"],
+                    temperature_2m_max=daily[
+                        "temperature_2m_max"
+                    ],
+                    temperature_2m_min=daily[
+                        "temperature_2m_min"
+                    ],
+                    precipitation_sum=daily[
+                        "precipitation_sum"
+                    ]
+                )
+
         except httpx.HTTPStatusError as exc:
             raise ExternalServiceError("Weather service returned an HTTP error.") from exc
         except httpx.RequestError as exc:

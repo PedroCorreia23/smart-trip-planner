@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.domain.schemas import TripQuery
+from app.domain.schemas import TripQuery, TripSearchResponse
 from app.services.geocoding import GeocodingService
 from app.services.weather import WeatherService
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,7 +28,7 @@ async def root():
 async def health_check():
     return {"status": "ok"}
 
-@app.post("/trips/search")
+@app.post("/trips/search", response_model=TripSearchResponse)
 async def search_trip(query: TripQuery):
 
     geo_service = GeocodingService()

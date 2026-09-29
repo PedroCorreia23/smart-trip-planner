@@ -1,5 +1,6 @@
 import httpx
 from app.exceptions import ExternalServiceError
+from app.domain.schemas import CurrencyInfo
 
 class CurrencyService:
     async def get_currency(self, country_code: str):
@@ -17,7 +18,7 @@ class CurrencyService:
 
                 currency = data["currencies"][0]
 
-                return currency
+                return CurrencyInfo(code=currency["code"], name=currency["name"], symbol=currency["symbol"])
         except httpx.HTTPStatusError as exc:
             raise ExternalServiceError("Currency service returned an HTTP error.") from exc
         except httpx.RequestError as exc:

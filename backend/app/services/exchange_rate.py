@@ -1,5 +1,6 @@
 import httpx
 from app.exceptions import ExternalServiceError
+from app.domain.schemas import ExchangeRateInfo
 
 class ExchangeRateService:
     async def get_rate(self, base_currency: str, target_currency: str):
@@ -15,16 +16,8 @@ class ExchangeRateService:
                 if "rate" not in data or data["rate"] is None:
                     return None
 
-                rate = data["rate"]
-                base = data["base"]
-                target = data["quote"]
-
-                return {
-                    "rate" : rate,
-                    "base" : base,
-                    "target" : target
-                }
-            
+                return ExchangeRateInfo(base=data["base"], target=data["quote"], rate=data["rate"])
+   
         except httpx.HTTPStatusError as exc:
             raise ExternalServiceError("Exchange rate service returned an HTTP error.") from exc 
 

@@ -1,5 +1,6 @@
 from fastapi import HTTPException
-from app.domain.schemas import TripQuery
+from app.domain.schemas import TripQuery, ExchangeRateInfo, TripSearchResponse
+
 
 class TripSearchUseCase:
 
@@ -20,8 +21,8 @@ class TripSearchUseCase:
         if not destination_coords:
             raise HTTPException(status_code=404, detail="Destination city not found.")
 
-        origin_currency = await self.currency_service.get_currency(origin_coords["country_code"])
-        destination_currency = await self.currency_service.get_currency(destination_coords["country_code"])
+        origin_currency = await self.currency_service.get_currency(origin_coords.country_code)
+        destination_currency = await self.currency_service.get_currency(destination_coords.country_code)
         
         if not origin_currency:
             raise HTTPException(status_code=502, detail="Could not retrieve origin currency.")
@@ -31,24 +32,25 @@ class TripSearchUseCase:
 
 
         weather = await self.weather_service.get_weather(
-            lat=destination_coords["lat"],
-            lon=destination_coords["lon"],
+            lat=destination_coords.lat,
+            lon=destination_coords.lon,
             start_date=query.start_date,
             end_date=query.end_date
         )
 
-        if origin_currency["code"] == destination_currency["code"]:
-            exchange_rate = {"base": origin_currency["code"],"target": destination_currency["code"],"rate": 1.0}
+        if origin_currency.code == destination_currency.code:
+            exchange_rate = ExchangeRateInfo(base=origin_currency.code, target=destination_currency.code, rate=1.0)
         else: 
-            exchange_rate = await self.exchange_rate_service.get_rate(origin_currency["code"], destination_currency["code"])
+            exchange_rate = await self.exchange_rate_service.get_rate(origin_currency.code, destination_currency.code)
 
 
-        return {"message" : "Trip sucessfully processed",
-              "trip_details" : query,
-              "origin_coordinates" : origin_coords,
-              "destination_coordinates" : destination_coords,
-              "weather" : weather,
-              "origin_currency" : origin_currency,
-              "destination_currency" : destination_currency,
-              "exchange_rate" : exchange_rate
-        }
+        return TripSearchResponse(
+            message="Trip successfully processed",
+            trip_details=query,
+            origin_coordinates=origin_coords,
+            destination_coordinates=destination_coords,
+            weather=weather,
+            origin_currency=origin_currency,
+            destination_currency=destination_currency,
+            exchange_rate=exchange_rate
+        )
