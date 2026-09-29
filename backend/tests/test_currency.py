@@ -2,7 +2,7 @@ import pytest, httpx
 from unittest.mock import patch, Mock
 from app.services.currency import CurrencyService
 from app.exceptions import ExternalServiceError
-
+from app.domain.schemas import CurrencyInfo
 
 @pytest.mark.asyncio
 async def test_get_currency_success():
@@ -21,7 +21,7 @@ async def test_get_currency_success():
         resultado = await service.get_currency("FR")
         
     # 3. ASSERT (Validar): Verificamos se o nosso código extraiu e converteu bem os dados falsos
-    assert resultado == {"code":"EUR","name":"Euro","symbol":"€"}
+    assert resultado == CurrencyInfo(code="EUR", name="Euro", symbol="€")
 
 @pytest.mark.asyncio
 async def test_get_currency_not_found():

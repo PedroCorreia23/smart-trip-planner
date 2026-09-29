@@ -1,5 +1,6 @@
 import httpx
 from app.exceptions import ExternalServiceError
+from app.domain.schemas import Coordinates
 
 class GeocodingService:
     async def get_coordinates(self, city_name: str):
@@ -19,11 +20,8 @@ class GeocodingService:
                 longitude = float(data[0]["lon"])
                 country_code = data[0]["address"]["country_code"]
 
-                return {
-                    "lat": latitude, 
-                    "lon": longitude,
-                    "country_code" : country_code
-                }
+                return Coordinates(lat=latitude, lon=longitude, country_code=country_code)
+                
         except httpx.HTTPStatusError as exc:
             raise ExternalServiceError("Geocoding service returned an HTTP error.") from exc 
         except httpx.RequestError as exc:
