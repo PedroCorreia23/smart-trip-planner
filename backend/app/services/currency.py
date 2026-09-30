@@ -1,10 +1,11 @@
 import httpx
 from app.exceptions import ExternalServiceError
 from app.domain.schemas import CurrencyInfo
+from app.config import settings
 
 class CurrencyService:
     async def get_currency(self, country_code: str):
-        url=f"https://countries.dev/alpha/{country_code.upper()}"
+        url=f"{settings.COUNTRIES_BASE_URL}/alpha/{country_code.upper()}"
         headers = {"User-Agent": "SmartTripPlanner/0.1"}
 
         try:

@@ -1,10 +1,11 @@
 import httpx
 from app.exceptions import ExternalServiceError
 from app.domain.schemas import Coordinates
+from app.config import settings
 
 class GeocodingService:
     async def get_coordinates(self, city_name: str):
-        url = f"https://nominatim.openstreetmap.org/search?q={city_name}&format=json&limit=1&addressdetails=1" 
+        url = f"{settings.NOMINATIM_BASE_URL}/search?q={city_name}&format=json&limit=1&addressdetails=1" 
         headers = {"User-Agent": "SmartTripPlanner/0.1"}
 
         try:
