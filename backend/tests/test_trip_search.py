@@ -1,10 +1,9 @@
 import pytest
 from unittest.mock import AsyncMock
-from fastapi import HTTPException
 
 from app.application.trip_search import TripSearchUseCase
 from app.domain.schemas import TripQuery, Coordinates, CurrencyInfo, ExchangeRateInfo, WeatherInfo
-
+from app.exceptions import LocationNotFoundError, CurrencyUnavailableError
 
 @pytest.mark.asyncio
 async def test_trip_search_success():
@@ -80,12 +79,12 @@ async def test_trip_search_success():
 
     result = await use_case.execute(query)
 
-    result.origin_coordinates
-    result.destination_coordinates
-    result.origin_currency
-    result.destination_currency
-    result.weather
-    result.exchange_rate
+    assert result.origin_coordinates == origin_coords
+    assert result.destination_coordinates == destination_coords
+    assert result.origin_currency == origin_currency
+    assert result.destination_currency == destination_currency
+    assert result.weather == fake_weather
+    assert result.exchange_rate == fake_exchange_rate
 
     exchange_rate_service.get_rate.assert_awaited_once_with(
         "EUR",
@@ -132,11 +131,10 @@ async def test_trip_search_origin_not_found():
         end_date="2026-10-15"
     )
 
-    with pytest.raises(HTTPException) as exc:
+    with pytest.raises(LocationNotFoundError) as exc:
         await use_case.execute(query)
 
-    assert exc.value.status_code == 404
-    assert exc.value.detail == "Origin city not found."
+    assert str(exc.value) == "Origin city not found."
 
 
 @pytest.mark.asyncio
@@ -170,11 +168,10 @@ async def test_trip_search_destination_not_found():
         end_date="2026-10-15"
     )
 
-    with pytest.raises(HTTPException) as exc:
+    with pytest.raises(LocationNotFoundError) as exc:
         await use_case.execute(query)
 
-    assert exc.value.status_code == 404
-    assert exc.value.detail == "Destination city not found."
+    assert str(exc.value) == "Destination city not found."
 
 
 @pytest.mark.asyncio
@@ -221,11 +218,10 @@ async def test_trip_search_origin_currency_not_found():
         end_date="2026-10-15"
     )
 
-    with pytest.raises(HTTPException) as exc:
+    with pytest.raises(CurrencyUnavailableError) as exc:
         await use_case.execute(query)
 
-    assert exc.value.status_code == 502
-    assert exc.value.detail == "Could not retrieve origin currency."
+    assert str(exc.value) == "Could not retrieve origin currency."
 
 
 @pytest.mark.asyncio
@@ -250,11 +246,11 @@ async def test_trip_search_destination_currency_not_found():
     ]
 
     currency_service.get_currency.side_effect = [
-        {
-            "code": "EUR",
-            "name": "Euro",
-            "symbol": "€"
-        },
+        CurrencyInfo(
+            code="EUR",
+            name="Euro",
+            symbol="€"
+        ),
         None
     ]
 
@@ -272,11 +268,10 @@ async def test_trip_search_destination_currency_not_found():
         end_date="2026-10-15"
     )
 
-    with pytest.raises(HTTPException) as exc:
+    with pytest.raises(CurrencyUnavailableError) as exc:
         await use_case.execute(query)
 
-    assert exc.value.status_code == 502
-    assert exc.value.detail == "Could not retrieve destination currency."
+    assert str(exc.value) == "Could not retrieve destination currency."
 
 
 @pytest.mark.asyncio

@@ -1,6 +1,5 @@
-from fastapi import HTTPException
 from app.domain.schemas import TripQuery, ExchangeRateInfo, TripSearchResponse
-
+from app.exceptions import LocationNotFoundError, CurrencyUnavailableError
 
 class TripSearchUseCase:
 
@@ -17,18 +16,18 @@ class TripSearchUseCase:
         destination_coords = await self.geocoding_service.get_coordinates(query.destination)
 
         if not origin_coords:
-            raise HTTPException(status_code=404, detail="Origin city not found.")
+            raise LocationNotFoundError("Origin city not found.")
         if not destination_coords:
-            raise HTTPException(status_code=404, detail="Destination city not found.")
+            raise LocationNotFoundError("Destination city not found.")
 
         origin_currency = await self.currency_service.get_currency(origin_coords.country_code)
         destination_currency = await self.currency_service.get_currency(destination_coords.country_code)
         
         if not origin_currency:
-            raise HTTPException(status_code=502, detail="Could not retrieve origin currency.")
+            raise CurrencyUnavailableError("Could not retrieve origin currency.")
 
         if not destination_currency:
-            raise HTTPException(status_code=502,detail="Could not retrieve destination currency.")
+            raise CurrencyUnavailableError("Could not retrieve destination currency.")
 
 
         weather = await self.weather_service.get_weather(

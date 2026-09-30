@@ -8,6 +8,7 @@ from app.services.currency import CurrencyService
 from app.services.exchange_rate import ExchangeRateService
 from app.application.trip_search import TripSearchUseCase
 from app.exceptions import ExternalServiceError
+from app.exceptions import LocationNotFoundError, CurrencyUnavailableError
 
 app = FastAPI()
 
@@ -49,4 +50,24 @@ async def external_service_error_handler(request: Request, exc: ExternalServiceE
         content={
             "detail": "An external service is currently unavailable."
         }
+    )
+
+@app.exception_handler(LocationNotFoundError)
+async def location_not_found_handler(
+    request: Request,
+    exc: LocationNotFoundError
+):
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)}
+    )
+
+@app.exception_handler(CurrencyUnavailableError)
+async def currency_unavailable_handler(
+    request: Request,
+    exc: CurrencyUnavailableError
+):
+    return JSONResponse(
+        status_code=502,
+        content={"detail": str(exc)}
     )
