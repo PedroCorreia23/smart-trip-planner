@@ -16,7 +16,7 @@ class WeatherService:
         )
 
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
                 response = await client.get(url)
                 response.raise_for_status()
                 data = response.json()
