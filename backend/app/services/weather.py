@@ -2,13 +2,13 @@ import httpx
 from datetime import date
 from app.exceptions import ExternalServiceError
 from app.domain.schemas import WeatherInfo
-
+from app.config import settings
 
 class WeatherService:
     async def get_weather(self, lat: float, lon: float, start_date: date, end_date: date):
         # A API do Open-Meteo exige as datas no formato ISO (YYYY-MM-DD), o que o tipo 'date' do Python já faz nativamente.
         url = (
-            f"https://api.open-meteo.com/v1/forecast?"
+            f"{settings.WEATHER_BASE_URL}/v1/forecast?"
             f"latitude={lat}&longitude={lon}&"
             f"start_date={start_date}&end_date={end_date}&"
             f"daily=temperature_2m_max,temperature_2m_min,precipitation_sum&"
@@ -16,7 +16,7 @@ class WeatherService:
         )
 
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
                 response = await client.get(url)
                 response.raise_for_status()
                 data = response.json()

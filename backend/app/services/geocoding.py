@@ -1,14 +1,15 @@
 import httpx
 from app.exceptions import ExternalServiceError
 from app.domain.schemas import Coordinates
+from app.config import settings
 
 class GeocodingService:
     async def get_coordinates(self, city_name: str):
-        url = f"https://nominatim.openstreetmap.org/search?q={city_name}&format=json&limit=1&addressdetails=1" 
-        headers = {"User-Agent": "SmartTripPlanner/0.1"}
+        url = f"{settings.NOMINATIM_BASE_URL}/search?q={city_name}&format=json&limit=1&addressdetails=1" 
+        headers = {"User-Agent": settings.USER_AGENT}
 
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
                 data = response.json()

@@ -1,14 +1,15 @@
 import httpx
 from app.exceptions import ExternalServiceError
 from app.domain.schemas import ExchangeRateInfo
+from app.config import settings
 
 class ExchangeRateService:
     async def get_rate(self, base_currency: str, target_currency: str):
-        url=f"https://api.frankfurter.dev/v2/rate/{base_currency.upper()}/{target_currency.upper()}"
-        headers = {"User-Agent": "SmartTripPlanner/0.1"}
+        url=f"{settings.FRANKFURTER_BASE_URL}/dev/v2/rate/{base_currency.upper()}/{target_currency.upper()}"
+        headers = {"User-Agent": settings.USER_AGENT}
 
         try:    
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
                 data = response.json()
