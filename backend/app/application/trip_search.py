@@ -1,9 +1,10 @@
 from app.domain.schemas import TripQuery, ExchangeRateInfo, TripSearchResponse
 from app.exceptions import LocationNotFoundError, CurrencyUnavailableError
+from app.application.ports import (GeocodingPort, WeatherPort, CurrencyPort,ExchangeRatePort,)
 
 class TripSearchUseCase:
 
-    def __init__(self, geocoding_service, weather_service, currency_service, exchange_rate_service):
+    def __init__(self, geocoding_service: GeocodingPort, weather_service: WeatherPort, currency_service: CurrencyPort, exchange_rate_service: ExchangeRatePort,):
 
         self.geocoding_service = geocoding_service
         self.weather_service = weather_service
