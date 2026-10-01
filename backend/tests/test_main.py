@@ -1,13 +1,17 @@
-import pytest, httpx
-from fastapi.testclient import TestClient
-from unittest.mock import patch, Mock
+import pytest
 
+from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock
 from app.main import app
 from app.exceptions import ExternalServiceError, LocationNotFoundError, CurrencyUnavailableError
-from app.services.exchange_rate import ExchangeRateService
+from app.dependencies import get_trip_search_use_case
 
 client = TestClient(app)
 
+@pytest.fixture(autouse=True)
+def clear_dependency_overrides():
+    yield
+    app.dependency_overrides.clear()
 
 def test_read_main():
     response = client.get("/health")
@@ -66,17 +70,17 @@ def test_search_trip_valid():
         }
     }
 
-    with patch(
-        "app.main.TripSearchUseCase.execute",
-        return_value=fake_result
-    ) as mock_execute:
+    fake_use_case = AsyncMock()
+    fake_use_case.execute.return_value = fake_result
 
-        response = client.post("/trips/search", json=payload)
+    app.dependency_overrides[get_trip_search_use_case] = (lambda: fake_use_case)
+
+    response = client.post("/trips/search", json=payload)
 
     assert response.status_code == 200
     assert response.json() == fake_result
 
-    mock_execute.assert_awaited_once()
+    fake_use_case.execute.assert_awaited_once()
 
 
 def test_search_trip_invalid_dates():
@@ -100,16 +104,16 @@ def test_search_trip_external_service_error():
         "end_date": "2026-10-15"
     }
 
-    with patch(
-        "app.main.TripSearchUseCase.execute",
-        side_effect=ExternalServiceError(
-            "Weather service is unavailable."
-        )
-    ):
-        response = client.post(
-            "/trips/search",
-            json=payload
-        )
+    fake_use_case = AsyncMock()
+    fake_use_case.execute.side_effect = ExternalServiceError(
+        "Weather service is unavailable."
+    )
+
+    app.dependency_overrides[get_trip_search_use_case] = (
+        lambda: fake_use_case
+    )
+
+    response = client.post("/trips/search", json=payload)
 
     assert response.status_code == 502
 
@@ -126,11 +130,16 @@ def test_search_trip_location_not_found():
         "end_date": "2026-10-15"
     }
 
-    with patch(
-        "app.main.TripSearchUseCase.execute",
-        side_effect=LocationNotFoundError("Origin city not found.")
-    ):
-        response = client.post("/trips/search", json=payload)
+    fake_use_case = AsyncMock()
+    fake_use_case.execute.side_effect = LocationNotFoundError(
+        "Origin city not found."
+    )
+
+    app.dependency_overrides[get_trip_search_use_case] = (
+        lambda: fake_use_case
+    )
+
+    response = client.post("/trips/search", json=payload)
 
     assert response.status_code == 404
     assert response.json() == {
@@ -146,13 +155,16 @@ def test_search_trip_currency_unavailable():
         "end_date": "2026-10-15"
     }
 
-    with patch(
-        "app.main.TripSearchUseCase.execute",
-        side_effect=CurrencyUnavailableError(
-            "Could not retrieve destination currency."
-        )
-    ):
-        response = client.post("/trips/search", json=payload)
+    fake_use_case = AsyncMock()
+    fake_use_case.execute.side_effect = CurrencyUnavailableError(
+        "Could not retrieve destination currency."
+    )
+
+    app.dependency_overrides[get_trip_search_use_case] = (
+        lambda: fake_use_case
+    )
+
+    response = client.post("/trips/search", json=payload)
 
     assert response.status_code == 502
     assert response.json() == {
