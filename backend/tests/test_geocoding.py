@@ -50,3 +50,19 @@ async def test_geocoding_http_error():
         service = GeocodingService()
         with pytest.raises(ExternalServiceError):
             await service.get_coordinates("Paris")
+
+@pytest.mark.asyncio
+async def test_geocoding_request_error():
+    request = httpx.Request(
+        "GET",
+        "https://nominatim.openstreetmap.org/search?q=Paris&format=json&limit=1&addressdetails=1",
+    )
+
+    with patch(
+        "httpx.AsyncClient.get", side_effect=httpx.RequestError("Connection failed", request=request)):
+        service = GeocodingService()
+
+        with pytest.raises(ExternalServiceError) as exc:
+            await service.get_coordinates("Paris")
+
+        assert str(exc.value) == "Geocoding service is unavailable."

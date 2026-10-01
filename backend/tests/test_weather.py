@@ -74,3 +74,18 @@ async def test_weather_http_error():
             await service.get_weather(
                 lat=48.8566, lon=2.3522, start_date=date(2026, 10, 10), end_date=date(2026, 10, 11)
             )
+
+@pytest.mark.asyncio
+async def test_weather_request_error():
+    request = httpx.Request(
+        "GET",
+        "https://api.open-meteo.com/v1/forecast",)
+
+    with patch(
+        "httpx.AsyncClient.get", side_effect=httpx.RequestError("Connection failed", request=request)):
+        service = WeatherService()
+
+        with pytest.raises(ExternalServiceError) as exc:
+            await service.get_weather(lat=48.8566, lon=2.3522, start_date=date(2026, 10, 10), end_date=date(2026, 10, 11))
+
+        assert str(exc.value) == "Weather service is unavailable."

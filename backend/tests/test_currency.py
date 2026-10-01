@@ -64,3 +64,18 @@ async def test_currency_http_error():
         service = CurrencyService()
         with pytest.raises(ExternalServiceError):
             await service.get_currency("fr")
+
+@pytest.mark.asyncio
+async def test_currency_request_error():
+    request = httpx.Request(
+        "GET",
+        "https://countries.dev/alpha/FR",)
+
+    with patch(
+        "httpx.AsyncClient.get", side_effect=httpx.RequestError("Connection failed", request=request)):
+        service = CurrencyService()
+
+        with pytest.raises(ExternalServiceError) as exc:
+            await service.get_currency("fr")
+
+        assert str(exc.value) == "Currency service is unavailable."
