@@ -1,7 +1,9 @@
-import httpx
+import httpx, logging
 from app.exceptions import ExternalServiceError
 from app.domain.schemas import ExchangeRateInfo
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 class ExchangeRateService:
     async def get_rate(self, base_currency: str, target_currency: str):
@@ -20,9 +22,10 @@ class ExchangeRateService:
                 return ExchangeRateInfo(base=data["base"], target=data["quote"], rate=data["rate"])
    
         except httpx.HTTPStatusError as exc:
+            logger.error("Exchange API returned HTTP error: status=%s", exc.response.status_code)
             raise ExternalServiceError("Exchange rate service returned an HTTP error.") from exc 
-
         except httpx.RequestError as exc:
+            logger.error("Exchange API  request failed: %s", exc)
             raise ExternalServiceError("Exchange rate service is unavailable.") from exc
             
 
