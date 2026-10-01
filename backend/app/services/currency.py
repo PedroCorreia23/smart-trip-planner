@@ -1,13 +1,17 @@
-import httpx, logging
-from app.exceptions import ExternalServiceError
-from app.domain.schemas import CurrencyInfo
+import logging
+
+import httpx
+
 from app.config import settings
+from app.domain.schemas import CurrencyInfo
+from app.exceptions import ExternalServiceError
 
 logger = logging.getLogger(__name__)
 
+
 class CurrencyService:
     async def get_currency(self, country_code: str):
-        url=f"{settings.COUNTRIES_BASE_URL}/alpha/{country_code.upper()}"
+        url = f"{settings.COUNTRIES_BASE_URL}/alpha/{country_code.upper()}"
         headers = {"User-Agent": settings.USER_AGENT}
 
         try:
@@ -21,7 +25,9 @@ class CurrencyService:
 
                 currency = data["currencies"][0]
 
-                return CurrencyInfo(code=currency["code"], name=currency["name"], symbol=currency["symbol"])
+                return CurrencyInfo(
+                    code=currency["code"], name=currency["name"], symbol=currency["symbol"]
+                )
         except httpx.HTTPStatusError as exc:
             logger.error("Currency API returned HTTP error: status=%s", exc.response.status_code)
             raise ExternalServiceError("Currency service returned an HTTP error.") from exc

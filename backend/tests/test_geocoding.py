@@ -1,38 +1,50 @@
-import pytest, httpx
-from unittest.mock import patch, Mock
-from app.services.geocoding import GeocodingService
-from app.exceptions import ExternalServiceError
+from unittest.mock import Mock, patch
+
+import httpx
+import pytest
+
 from app.domain.schemas import Coordinates
+from app.exceptions import ExternalServiceError
+from app.services.geocoding import GeocodingService
+
 
 # O decorador avisa o Pytest que esta função usa "await"
 @pytest.mark.asyncio
 async def test_get_coordinates_success():
     # 1. ARRANGE (Preparar): Os dados falsos que a API devolveria
-    fake_api_response = [{"lat": "48.8566", "lon": "2.3522", "address" : {"country": "France", "country_code": "fr"}}]
-    
+    fake_api_response = [
+        {"lat": "48.8566", "lon": "2.3522", "address": {"country": "France", "country_code": "fr"}}
+    ]
+
     # Criamos uma resposta HTTP falsa (AsyncMock) e dizemos-lhe o que devolver quando chamarem .json()
     mock_response = Mock()
     mock_response.json.return_value = fake_api_response
-    
+
     # 2. ACT (Agir): Intercetamos o httpx.AsyncClient.get e forçamos a usar a nossa resposta falsa
     with patch("httpx.AsyncClient.get", return_value=mock_response):
         service = GeocodingService()
-        
+
         # O nosso código acha que está a ir à Internet, mas o 'patch' prendeu-o dentro do nosso teste!
         resultado = await service.get_coordinates("Paris")
-        
+
     # 3. ASSERT (Validar): Verificamos se o nosso código extraiu e converteu bem os dados falsos
-    assert resultado == Coordinates(lat = 48.8566, lon = 2.3522, country_code = "fr")
+    assert resultado == Coordinates(lat=48.8566, lon=2.3522, country_code="fr")
+
 
 @pytest.mark.asyncio
 async def test_geocoding_http_error():
 
-    request = httpx.Request("GET", "https://nominatim.openstreetmap.org/search?q=Paris&format=json&limit=1&addressdetails=1")
+    request = httpx.Request(
+        "GET",
+        "https://nominatim.openstreetmap.org/search?q=Paris&format=json&limit=1&addressdetails=1",
+    )
 
     response = httpx.Response(500, request=request)
-    
+
     mock_response = Mock()
-    mock_response.raise_for_status.side_effect = httpx.HTTPStatusError("Server error", request=request,response=response)
+    mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+        "Server error", request=request, response=response
+    )
 
     with patch("httpx.AsyncClient.get", return_value=mock_response):
         service = GeocodingService()

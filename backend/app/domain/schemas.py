@@ -1,5 +1,7 @@
-from pydantic import BaseModel, field_validator
 from datetime import date
+
+from pydantic import BaseModel, field_validator
+
 
 class TripQuery(BaseModel):
     origin: str
@@ -13,26 +15,28 @@ class TripQuery(BaseModel):
         start_date = info.data.get("start_date")
 
         if start_date and end_date < start_date:
-            raise ValueError(
-                "End date can not be previouse to the starting date."
-            )
+            raise ValueError("End date can not be previouse to the starting date.")
 
         return end_date
+
 
 class Coordinates(BaseModel):
     lat: float
     lon: float
     country_code: str
 
+
 class CurrencyInfo(BaseModel):
     code: str
     name: str
     symbol: str
 
+
 class ExchangeRateInfo(BaseModel):
     base: str
     target: str
     rate: float
+
 
 class WeatherInfo(BaseModel):
     time: list[str]

@@ -1,9 +1,17 @@
-import pytest
 from unittest.mock import AsyncMock
 
+import pytest
+
 from app.application.trip_search import TripSearchUseCase
-from app.domain.schemas import TripQuery, Coordinates, CurrencyInfo, ExchangeRateInfo, WeatherInfo
-from app.exceptions import LocationNotFoundError, CurrencyUnavailableError
+from app.domain.schemas import (
+    Coordinates,
+    CurrencyInfo,
+    ExchangeRateInfo,
+    TripQuery,
+    WeatherInfo,
+)
+from app.exceptions import CurrencyUnavailableError, LocationNotFoundError
+
 
 @pytest.mark.asyncio
 async def test_trip_search_success():
@@ -13,52 +21,26 @@ async def test_trip_search_success():
     currency_service = AsyncMock()
     exchange_rate_service = AsyncMock()
 
-    origin_coords = Coordinates(
-        lat=38.72,
-        lon=-9.14,
-        country_code="pt"
-    )
+    origin_coords = Coordinates(lat=38.72, lon=-9.14, country_code="pt")
 
-    destination_coords = Coordinates(
-        lat=40.71,
-        lon=-74.00,
-        country_code="us"
-    )
+    destination_coords = Coordinates(lat=40.71, lon=-74.00, country_code="us")
 
-    origin_currency = CurrencyInfo(
-        code="EUR",
-        name="Euro",
-        symbol="€"
-    )
+    origin_currency = CurrencyInfo(code="EUR", name="Euro", symbol="€")
 
-    destination_currency = CurrencyInfo(
-        code="USD",
-        name="US Dollar",
-        symbol="$"
-    )
+    destination_currency = CurrencyInfo(code="USD", name="US Dollar", symbol="$")
 
     fake_weather = WeatherInfo(
         time=["2026-10-10"],
         temperature_2m_max=[20.0],
         temperature_2m_min=[10.0],
-        precipitation_sum=[0.0]
+        precipitation_sum=[0.0],
     )
 
-    fake_exchange_rate = ExchangeRateInfo(
-        base="EUR",
-        target="USD",
-        rate=1.18
-    )
+    fake_exchange_rate = ExchangeRateInfo(base="EUR", target="USD", rate=1.18)
 
-    geo_service.get_coordinates.side_effect = [
-        origin_coords,
-        destination_coords
-    ]
+    geo_service.get_coordinates.side_effect = [origin_coords, destination_coords]
 
-    currency_service.get_currency.side_effect = [
-        origin_currency,
-        destination_currency
-    ]
+    currency_service.get_currency.side_effect = [origin_currency, destination_currency]
 
     weather_service.get_weather.return_value = fake_weather
     exchange_rate_service.get_rate.return_value = fake_exchange_rate
@@ -67,14 +49,11 @@ async def test_trip_search_success():
         geocoding_service=geo_service,
         weather_service=weather_service,
         currency_service=currency_service,
-        exchange_rate_service=exchange_rate_service
+        exchange_rate_service=exchange_rate_service,
     )
 
     query = TripQuery(
-        origin="Lisboa",
-        destination="New York",
-        start_date="2026-10-10",
-        end_date="2026-10-15"
+        origin="Lisboa", destination="New York", start_date="2026-10-10", end_date="2026-10-15"
     )
 
     result = await use_case.execute(query)
@@ -86,10 +65,7 @@ async def test_trip_search_success():
     assert result.weather == fake_weather
     assert result.exchange_rate == fake_exchange_rate
 
-    exchange_rate_service.get_rate.assert_awaited_once_with(
-        "EUR",
-        "USD"
-    )
+    exchange_rate_service.get_rate.assert_awaited_once_with("EUR", "USD")
 
     geo_service.get_coordinates.assert_any_await("Lisboa")
     geo_service.get_coordinates.assert_any_await("New York")
@@ -110,25 +86,21 @@ async def test_trip_search_origin_not_found():
 
     geo_service.get_coordinates.side_effect = [
         None,
-        Coordinates(
-            lat=40.71,
-            lon=-74.00,
-            country_code="us"
-        )
+        Coordinates(lat=40.71, lon=-74.00, country_code="us"),
     ]
 
     use_case = TripSearchUseCase(
         geocoding_service=geo_service,
         weather_service=weather_service,
         currency_service=currency_service,
-        exchange_rate_service=exchange_rate_service
+        exchange_rate_service=exchange_rate_service,
     )
 
     query = TripQuery(
         origin="CidadeInexistente",
         destination="New York",
         start_date="2026-10-10",
-        end_date="2026-10-15"
+        end_date="2026-10-15",
     )
 
     with pytest.raises(LocationNotFoundError) as exc:
@@ -146,26 +118,22 @@ async def test_trip_search_destination_not_found():
     exchange_rate_service = AsyncMock()
 
     geo_service.get_coordinates.side_effect = [
-        Coordinates(
-            lat=38.72,
-            lon=-9.14,
-            country_code="pt"
-        ),
-        None
+        Coordinates(lat=38.72, lon=-9.14, country_code="pt"),
+        None,
     ]
 
     use_case = TripSearchUseCase(
         geocoding_service=geo_service,
         weather_service=weather_service,
         currency_service=currency_service,
-        exchange_rate_service=exchange_rate_service
+        exchange_rate_service=exchange_rate_service,
     )
 
     query = TripQuery(
         origin="Lisboa",
         destination="CidadeInexistente",
         start_date="2026-10-10",
-        end_date="2026-10-15"
+        end_date="2026-10-15",
     )
 
     with pytest.raises(LocationNotFoundError) as exc:
@@ -183,39 +151,24 @@ async def test_trip_search_origin_currency_not_found():
     exchange_rate_service = AsyncMock()
 
     geo_service.get_coordinates.side_effect = [
-        Coordinates(
-            lat=38.72,
-            lon=-9.14,
-            country_code="pt"
-        ),
-        Coordinates(
-            lat=40.71,
-            lon=-74.00,
-            country_code="us"
-        )
+        Coordinates(lat=38.72, lon=-9.14, country_code="pt"),
+        Coordinates(lat=40.71, lon=-74.00, country_code="us"),
     ]
 
     currency_service.get_currency.side_effect = [
         None,
-        CurrencyInfo(
-            code="USD",
-            name="US Dollar",
-            symbol="$"
-        )
+        CurrencyInfo(code="USD", name="US Dollar", symbol="$"),
     ]
 
     use_case = TripSearchUseCase(
         geocoding_service=geo_service,
         weather_service=weather_service,
         currency_service=currency_service,
-        exchange_rate_service=exchange_rate_service
+        exchange_rate_service=exchange_rate_service,
     )
 
     query = TripQuery(
-        origin="Lisboa",
-        destination="New York",
-        start_date="2026-10-10",
-        end_date="2026-10-15"
+        origin="Lisboa", destination="New York", start_date="2026-10-10", end_date="2026-10-15"
     )
 
     with pytest.raises(CurrencyUnavailableError) as exc:
@@ -233,39 +186,24 @@ async def test_trip_search_destination_currency_not_found():
     exchange_rate_service = AsyncMock()
 
     geo_service.get_coordinates.side_effect = [
-        Coordinates(
-            lat=38.72,
-            lon=-9.14,
-            country_code="pt"
-        ),
-        Coordinates(
-            lat=40.71,
-            lon=-74.00,
-            country_code="us"
-        )
+        Coordinates(lat=38.72, lon=-9.14, country_code="pt"),
+        Coordinates(lat=40.71, lon=-74.00, country_code="us"),
     ]
 
     currency_service.get_currency.side_effect = [
-        CurrencyInfo(
-            code="EUR",
-            name="Euro",
-            symbol="€"
-        ),
-        None
+        CurrencyInfo(code="EUR", name="Euro", symbol="€"),
+        None,
     ]
 
     use_case = TripSearchUseCase(
         geocoding_service=geo_service,
         weather_service=weather_service,
         currency_service=currency_service,
-        exchange_rate_service=exchange_rate_service
+        exchange_rate_service=exchange_rate_service,
     )
 
     query = TripQuery(
-        origin="Lisboa",
-        destination="New York",
-        start_date="2026-10-10",
-        end_date="2026-10-15"
+        origin="Lisboa", destination="New York", start_date="2026-10-10", end_date="2026-10-15"
     )
 
     with pytest.raises(CurrencyUnavailableError) as exc:
@@ -282,40 +220,22 @@ async def test_trip_search_same_currency():
     currency_service = AsyncMock()
     exchange_rate_service = AsyncMock()
 
-    origin_coords = Coordinates(
-        lat=38.72,
-        lon=-9.14,
-        country_code="pt"
-    )
+    origin_coords = Coordinates(lat=38.72, lon=-9.14, country_code="pt")
 
-    destination_coords = Coordinates(
-        lat=48.85,
-        lon=2.35,
-        country_code="fr"
-    )
+    destination_coords = Coordinates(lat=48.85, lon=2.35, country_code="fr")
 
-    eur_currency = CurrencyInfo(
-        code="EUR",
-        name="Euro",
-        symbol="€"
-    )
+    eur_currency = CurrencyInfo(code="EUR", name="Euro", symbol="€")
 
     fake_weather = WeatherInfo(
         time=["2026-10-10"],
         temperature_2m_max=[20.0],
         temperature_2m_min=[10.0],
-        precipitation_sum=[0.0]
+        precipitation_sum=[0.0],
     )
 
-    geo_service.get_coordinates.side_effect = [
-        origin_coords,
-        destination_coords
-    ]
+    geo_service.get_coordinates.side_effect = [origin_coords, destination_coords]
 
-    currency_service.get_currency.side_effect = [
-        eur_currency,
-        eur_currency
-    ]
+    currency_service.get_currency.side_effect = [eur_currency, eur_currency]
 
     weather_service.get_weather.return_value = fake_weather
 
@@ -323,22 +243,15 @@ async def test_trip_search_same_currency():
         geocoding_service=geo_service,
         weather_service=weather_service,
         currency_service=currency_service,
-        exchange_rate_service=exchange_rate_service
+        exchange_rate_service=exchange_rate_service,
     )
 
     query = TripQuery(
-        origin="Lisboa",
-        destination="Paris",
-        start_date="2026-10-10",
-        end_date="2026-10-15"
+        origin="Lisboa", destination="Paris", start_date="2026-10-10", end_date="2026-10-15"
     )
 
     result = await use_case.execute(query)
 
-    assert result.exchange_rate == ExchangeRateInfo(
-        base="EUR",
-        target="EUR",
-        rate=1.0
-    )
+    assert result.exchange_rate == ExchangeRateInfo(base="EUR", target="EUR", rate=1.0)
 
     exchange_rate_service.get_rate.assert_not_awaited()

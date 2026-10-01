@@ -1,6 +1,7 @@
 class ExternalServiceError(Exception):
     pass
 
+
 class LocationNotFoundError(Exception):
     pass
 
