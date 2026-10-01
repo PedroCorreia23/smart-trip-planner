@@ -1,10 +1,13 @@
-import httpx
+import httpx, logging
 from datetime import date
 from app.exceptions import ExternalServiceError
 from app.domain.schemas import WeatherInfo
 from app.config import settings
 
+logger = logging.getLogger(__name__)
+
 class WeatherService:
+
     async def get_weather(self, lat: float, lon: float, start_date: date, end_date: date):
         # A API do Open-Meteo exige as datas no formato ISO (YYYY-MM-DD), o que o tipo 'date' do Python já faz nativamente.
         url = (
@@ -38,6 +41,8 @@ class WeatherService:
                 )
 
         except httpx.HTTPStatusError as exc:
+            logger.error("Weather API returned HTTP error: status=%s", exc.response.status_code)
             raise ExternalServiceError("Weather service returned an HTTP error.") from exc
         except httpx.RequestError as exc:
+            logger.error("Weather API  request failed: %s", exc)
             raise ExternalServiceError("Weather service is unavailable.") from exc

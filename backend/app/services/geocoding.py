@@ -1,7 +1,9 @@
-import httpx
+import httpx, logging
 from app.exceptions import ExternalServiceError
 from app.domain.schemas import Coordinates
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 class GeocodingService:
     async def get_coordinates(self, city_name: str):
@@ -24,6 +26,8 @@ class GeocodingService:
                 return Coordinates(lat=latitude, lon=longitude, country_code=country_code)
                 
         except httpx.HTTPStatusError as exc:
+            logger.error("Geocoding API returned HTTP error: status=%s", exc.response.status_code)
             raise ExternalServiceError("Geocoding service returned an HTTP error.") from exc 
         except httpx.RequestError as exc:
+            logger.error("Geocoding API  request failed: %s", exc)
             raise ExternalServiceError("Geocoding service is unavailable.") from exc
