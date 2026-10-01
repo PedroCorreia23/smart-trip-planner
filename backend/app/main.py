@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import JSONResponse
 from app.domain.schemas import TripQuery, TripSearchResponse
 from app.services.geocoding import GeocodingService
@@ -9,6 +9,7 @@ from app.services.exchange_rate import ExchangeRateService
 from app.application.trip_search import TripSearchUseCase
 from app.exceptions import ExternalServiceError
 from app.exceptions import LocationNotFoundError, CurrencyUnavailableError
+from app.dependencies import get_trip_search_use_case
 
 app = FastAPI()
 
@@ -30,17 +31,11 @@ async def health_check():
     return {"status": "ok"}
 
 @app.post("/trips/search", response_model=TripSearchResponse)
-async def search_trip(query: TripQuery):
-
-    geo_service = GeocodingService()
-    currency_service = CurrencyService()
-    weather_service = WeatherService()
-    exchange_rate_service = ExchangeRateService()
-
-    use_case = TripSearchUseCase(geocoding_service=geo_service, weather_service=weather_service, currency_service=currency_service,
-                                    exchange_rate_service=exchange_rate_service)  
-
-    return await use_case.execute(query) 
+async def search_trip(
+    query: TripQuery,
+    use_case: TripSearchUseCase = Depends(get_trip_search_use_case)
+):
+    return await use_case.execute(query)
 
 @app.exception_handler(ExternalServiceError)
 async def external_service_error_handler(request: Request, exc: ExternalServiceError):
