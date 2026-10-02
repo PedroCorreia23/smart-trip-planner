@@ -51,6 +51,7 @@ async def test_geocoding_http_error():
         with pytest.raises(ExternalServiceError):
             await service.get_coordinates("Paris")
 
+
 @pytest.mark.asyncio
 async def test_geocoding_request_error():
     request = httpx.Request(
@@ -59,7 +60,9 @@ async def test_geocoding_request_error():
     )
 
     with patch(
-        "httpx.AsyncClient.get", side_effect=httpx.RequestError("Connection failed", request=request)):
+        "httpx.AsyncClient.get",
+        side_effect=httpx.RequestError("Connection failed", request=request),
+    ):
         service = GeocodingService()
 
         with pytest.raises(ExternalServiceError) as exc:

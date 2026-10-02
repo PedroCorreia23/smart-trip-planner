@@ -11,7 +11,10 @@ logger = logging.getLogger(__name__)
 
 class ExchangeRateService:
     async def get_rate(self, base_currency: str, target_currency: str):
-        url = f"{settings.FRANKFURTER_BASE_URL}/dev/v2/rate/{base_currency.upper()}/{target_currency.upper()}"
+        url = (
+            f"{settings.FRANKFURTER_BASE_URL}/v2/rate/"
+            f"{base_currency.upper()}/{target_currency.upper()}"
+        )
         headers = {"User-Agent": settings.USER_AGENT}
 
         try:
