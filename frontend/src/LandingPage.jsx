@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 export default function LandingPage() {
   const nav = useNavigate()
   const navigate=()=>{
-    nav("/home")
+    nav("/home-page")
   }
   return (
     <div className="landing-page">
