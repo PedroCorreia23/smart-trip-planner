@@ -1,13 +1,18 @@
-import React from "react";
 import './App.css';
+import LandingPage from "./LandingPage";
+import Home from "./Home";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 export default function App() {
   return (
-    <div className="landing-page">
-      <h1>SMART TRIP PLANNER</h1>
-      <h2>Are you ready for your next trip?</h2>
-      <button>Let's Go!</button>
-    </div>
+   
+      <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path='/home' element={<Home/>}/>
+      </Routes>
+      </BrowserRouter>
+
   );
 }
 
