@@ -122,3 +122,20 @@
   position: absolute;
   right: 0;
 }
+
+.trip-search-form button {
+  background-color: orange;
+  position: relative;
+  width: 100%;               
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.search-button-group {
+  
+  justify-content: flex-end;
+}

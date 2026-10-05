@@ -1,13 +1,28 @@
 import { useState } from "react";
 import { FaLocationDot } from "react-icons/fa6";
 import { FaCalendarDays } from "react-icons/fa6";
+import { FaSearchengin } from "react-icons/fa6";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 export default function TripSearchForm() {
 
-    const [departureDate, setDepartureDate] = useState(null);
-    const [arrivalDate, setArrivalDate] = useState(null);
+    const [departureDate, setDepartureDate] = useState("");
+    const [arrivalDate, setArrivalDate] = useState("");
+    const [originPlace, setOriginPlace] = useState("")
+    const [destinationPlace, setDestinationPlace] = useState("")
+
+    const handleSearch = () => {
+        const trip = {
+            origin: originPlace,
+            destination: destinationPlace,
+            start_date: departureDate,
+            end_date: arrivalDate
+        }
+
+        console.log(trip)
+        }
+
     return (
         <main className="trip-search-form">
             <div className="search-box">
@@ -50,9 +65,11 @@ export default function TripSearchForm() {
                         />
                     </div>
                 </div>
+                
                 <div className="input-group">
                     <label htmlFor="arrival-date"> Arrival Date</label>
                     <div className="input-with-icon">
+                        
                         <FaCalendarDays className="date-icon" />
 
                         <DatePicker
@@ -66,6 +83,16 @@ export default function TripSearchForm() {
                         />
                     </div>
                 </div>
+
+                <div className="input-group search-button-group">
+                    <div className="input-with-icon">
+                        <FaSearchengin className="date-icon" />
+                        <button>Search Trip</button>
+
+                        
+                    </div>
+                </div>
+                
             </div>
         </main>
   );
