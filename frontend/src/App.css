@@ -21,3 +21,121 @@
   background-color: rgb(241, 171, 84);
 }
 
+/* Página Home */
+.home-page {
+  display: flex;             
+  justify-content: center;   
+  padding-top: 200px;        
+}
+
+/* Caixa branca principal */
+.search-box {
+  background-color: white;  
+  width: 90%;                
+  max-width: 1200px;      
+  border-radius: 16px;       
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;            
+  gap: 20px;                 
+  padding: 25px;           
+}
+
+/* Grupo que contém:
+   label + input
+
+   Exemplo:
+   Origin
+   [ textbox ]
+*/
+.input-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+  text-align: left;
+}
+
+/* Texto "Origin" e "Destination" */
+.input-group label {
+  font-weight: bold;       
+  font-size: 14px;          
+}
+
+/* Textboxes de Origin e Destination */
+.input-group input {
+  width: 100%;               
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Container do ícone + input */
+.input-with-icon {
+  position: relative;
+}
+
+/* Ícone de localização */
+.location-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: #123a68;
+  z-index: 1;
+}
+
+/* Input com espaço para o ícone */
+.input-with-icon input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  padding-left: 40px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Ícone da data */
+/* Ícone da data */
+.date-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: #123a68;
+  z-index: 1;
+}
+/* Input da data com espaço à esquerda para o ícone */
+.date-input {
+  padding-left: 40px !important;
+}
+
+/* Esconde o ícone de calendário nativo do browser */
+/* Esconde o ícone nativo do date picker */
+.date-input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+}
+
+.trip-search-form button {
+  background-color: orange;
+  position: relative;
+  width: 100%;               
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.search-button-group {
+  
+  justify-content: flex-end;
+}
