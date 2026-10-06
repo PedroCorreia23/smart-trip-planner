@@ -7,8 +7,8 @@ import "react-datepicker/dist/react-datepicker.css";
 
 export default function TripSearchForm() {
 
-    const [departureDate, setDepartureDate] = useState("");
-    const [arrivalDate, setArrivalDate] = useState("");
+    const [departureDate, setDepartureDate] = useState(null);
+    const [arrivalDate, setArrivalDate] = useState(null);
     const [originPlace, setOriginPlace] = useState("")
     const [destinationPlace, setDestinationPlace] = useState("")
 
@@ -34,6 +34,8 @@ export default function TripSearchForm() {
                         <input
                             id="origin"
                             type="text"
+                            value={originPlace}
+                            onChange={(e) => setOriginPlace(e.target.value) }
                             placeholder="e.g. Porto, PT"
                         />
                     </div>
@@ -46,6 +48,8 @@ export default function TripSearchForm() {
                         <input
                             id="destination"
                             type="text"
+                            value={destinationPlace}
+                            onChange={(d) => setDestinationPlace(d.target.value) }
                             placeholder="e.g. Paris, FR"
                         />
                     </div>
@@ -87,9 +91,7 @@ export default function TripSearchForm() {
                 <div className="input-group search-button-group">
                     <div className="input-with-icon">
                         <FaSearchengin className="date-icon" />
-                        <button>Search Trip</button>
-
-                        
+                        <button onClick={handleSearch}>Search Trip</button>
                     </div>
                 </div>
                 
