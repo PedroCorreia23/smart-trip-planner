@@ -4,6 +4,7 @@ import { FaCalendarDays } from "react-icons/fa6";
 import { FaSearchengin } from "react-icons/fa6";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import moment from "moment";
 
 export default function TripSearchForm() {
 
@@ -12,16 +13,34 @@ export default function TripSearchForm() {
     const [originPlace, setOriginPlace] = useState("")
     const [destinationPlace, setDestinationPlace] = useState("")
 
-    const handleSearch = () => {
-        const trip = {
+    const handleSearch = async () => {
+        try {
+            const trip = {
             origin: originPlace,
             destination: destinationPlace,
-            start_date: departureDate,
-            end_date: arrivalDate
-        }
+            start_date: moment(departureDate).format("YYYY-MM-DD"),
+            end_date: moment(arrivalDate).format("YYYY-MM-DD")
+            }
 
-        console.log(trip)
+            const response = await fetch("http://127.0.0.1:8000/trips/search", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(trip)
+            })
+
+            if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`)
+            }
+
+            const data = await response.json()
+            console.log(data)
+
+        } catch (error) {
+            console.error("Error searching trip:", error)
         }
+    } 
 
     return (
         <main className="trip-search-form">
@@ -54,7 +73,7 @@ export default function TripSearchForm() {
                         />
                     </div>
                 </div>
-
+                
                 <div className="input-group">
                     <label htmlFor="departure-date"> Departure Date</label>
                     <div className="input-with-icon">
