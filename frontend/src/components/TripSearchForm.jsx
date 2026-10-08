@@ -12,6 +12,7 @@ export default function TripSearchForm() {
     const [arrivalDate, setArrivalDate] = useState(null);
     const [originPlace, setOriginPlace] = useState("")
     const [destinationPlace, setDestinationPlace] = useState("")
+    const [tripResult, setTripResult] = useState(null)
 
     const handleSearch = async () => {
         try {
@@ -33,9 +34,9 @@ export default function TripSearchForm() {
             if (!response.ok) {
             throw new Error(`Request failed with status ${response.status}`)
             }
-
+            
             const data = await response.json()
-            console.log(data)
+            setTripResult(data)
 
         } catch (error) {
             console.error("Error searching trip:", error)
@@ -114,6 +115,13 @@ export default function TripSearchForm() {
                     </div>
                 </div>
                 
+                {tripResult && (
+                    <div>
+                        <h2>Trip Results</h2>
+                        <p>Origin: {tripResult.trip_details.origin}</p>
+                        <p>Destination: {tripResult.trip_details.destination}</p>
+                    </div>
+                )}
             </div>
         </main>
   );
