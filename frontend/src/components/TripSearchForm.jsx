@@ -113,14 +113,6 @@ export default function TripSearchForm({ setTripResult }) {
                         <button onClick={handleSearch}>Search Trip</button>
                     </div>
                 </div>
-                
-                {tripResult && (
-                    <div>
-                        <h2>Trip Results</h2>
-                        <p>Origin: {tripResult.trip_details.origin}</p>
-                        <p>Destination: {tripResult.trip_details.destination}</p>
-                    </div>
-                )}
             </div>
         </main>
   );
