@@ -4,6 +4,8 @@ export default function TripResults({ tripResult }) {
             <h2>Trip Results</h2>
             <p>Origin: {tripResult.trip_details.origin}</p>
             <p>Destination: {tripResult.trip_details.destination}</p>
+            <p>Start Date: {tripResult.trip_details.start_date}</p>
+            <p>Start Date: {tripResult.trip_details.end_date}</p>
         </div>
   );
 }
