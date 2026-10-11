@@ -7,6 +7,11 @@ export default function TripResults({ tripResult }) {
             <p>Start Date: {tripResult.trip_details.start_date}</p>
             <p>End Date: {tripResult.trip_details.end_date}</p>
             <p>1 {tripResult.origin_currency.code} = {tripResult.exchange_rate.rate} {tripResult.destination_currency.code}</p>
+            {tripResult.weather.time.map((date) => (
+              <div key={date}>
+                <h6>{date}</h6>
+              </div>
+            ))}
         </div>
   );
 }
