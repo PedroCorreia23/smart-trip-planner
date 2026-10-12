@@ -35,7 +35,8 @@ export default function TripSearchForm({ setTripResult, loadingState, setLoading
             })
 
             if (!response.ok) {
-            throw new Error(`Request failed with status ${response.status}`)
+                const errorData = await response.json()
+                throw new Error(errorData.detail || "An unexpected error occurred.")
             }
             
             const data = await response.json()
