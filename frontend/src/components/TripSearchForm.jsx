@@ -6,7 +6,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 
-export default function TripSearchForm({ setTripResult }) {
+export default function TripSearchForm({ setTripResult, loadingState, setLoadingState, setErrorState }) {
 
     const [departureDate, setDepartureDate] = useState(null);
     const [arrivalDate, setArrivalDate] = useState(null);
@@ -15,6 +15,10 @@ export default function TripSearchForm({ setTripResult }) {
 
     const handleSearch = async () => {
         try {
+            setLoadingState(true)
+            setErrorState(null)
+            setTripResult(null)
+
             const trip = {
             origin: originPlace,
             destination: destinationPlace,
@@ -31,14 +35,17 @@ export default function TripSearchForm({ setTripResult }) {
             })
 
             if (!response.ok) {
-            throw new Error(`Request failed with status ${response.status}`)
+                const errorData = await response.json()
+                throw new Error(errorData.detail || "An unexpected error occurred.")
             }
             
             const data = await response.json()
             setTripResult(data)
 
         } catch (error) {
-            console.error("Error searching trip:", error)
+            setErrorState(error.message)
+        } finally {
+            setLoadingState(false)
         }
     } 
 
@@ -110,7 +117,9 @@ export default function TripSearchForm({ setTripResult }) {
                 <div className="input-group search-button-group">
                     <div className="input-with-icon">
                         <FaSearchengin className="date-icon" />
-                        <button onClick={handleSearch}>Search Trip</button>
+                        <button onClick={handleSearch} disabled={loadingState}>
+                            {loadingState ? "Searching..." : "Search Trip"}
+                        </button>
                     </div>
                 </div>
             </div>
