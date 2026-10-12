@@ -6,7 +6,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 
-export default function TripSearchForm({ setTripResult, loadingState, setLoadingState }) {
+export default function TripSearchForm({ setTripResult, loadingState, setLoadingState, setErrorState }) {
 
     const [departureDate, setDepartureDate] = useState(null);
     const [arrivalDate, setArrivalDate] = useState(null);
@@ -16,6 +16,9 @@ export default function TripSearchForm({ setTripResult, loadingState, setLoading
     const handleSearch = async () => {
         try {
             setLoadingState(true)
+            setErrorState(null)
+            setTripResult(null)
+
             const trip = {
             origin: originPlace,
             destination: destinationPlace,
@@ -39,7 +42,7 @@ export default function TripSearchForm({ setTripResult, loadingState, setLoading
             setTripResult(data)
 
         } catch (error) {
-            console.error("Error searching trip:", error)
+            setErrorState(error.message)
         } finally {
             setLoadingState(false)
         }
