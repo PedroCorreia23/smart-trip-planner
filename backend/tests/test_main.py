@@ -51,6 +51,7 @@ def test_search_trip_valid():
             "temperature_2m_max": [20.0],
             "temperature_2m_min": [10.0],
             "precipitation_sum": [0.0],
+            "weather_code": [0],
         },
         "origin_currency": {"code": "EUR", "name": "Euro", "symbol": "€"},
         "destination_currency": {"code": "USD", "name": "US Dollar", "symbol": "$"},

@@ -43,6 +43,7 @@ class WeatherInfo(BaseModel):
     temperature_2m_max: list[float]
     temperature_2m_min: list[float]
     precipitation_sum: list[float]
+    weather_code: list[int]
 
 
 class TripSearchResponse(BaseModel):

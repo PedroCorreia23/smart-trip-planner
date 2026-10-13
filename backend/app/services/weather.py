@@ -17,7 +17,7 @@ class WeatherService:
             f"{settings.WEATHER_BASE_URL}/v1/forecast?"
             f"latitude={lat}&longitude={lon}&"
             f"start_date={start_date}&end_date={end_date}&"
-            f"daily=temperature_2m_max,temperature_2m_min,precipitation_sum&"
+            f"daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&"
             f"timezone=auto"
         )
 
@@ -35,6 +35,7 @@ class WeatherService:
                     temperature_2m_max=daily["temperature_2m_max"],
                     temperature_2m_min=daily["temperature_2m_min"],
                     precipitation_sum=daily["precipitation_sum"],
+                    weather_code=daily["weather_code"]
                 )
 
         except httpx.HTTPStatusError as exc:
