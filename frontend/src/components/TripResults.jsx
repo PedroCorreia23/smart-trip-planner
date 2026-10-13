@@ -1,3 +1,6 @@
+import WeatherIcon from "./WeatherIcon";
+import moment from "moment";
+
 export default function TripResults({ tripResult }) {
   return (
         <div className="results">
@@ -5,7 +8,10 @@ export default function TripResults({ tripResult }) {
           <div className="weather">
             {tripResult.weather.time.map((date, index) => (
               <div className="weather-card" key={date}>
-                <p>{date}</p>
+                <p>{moment(date, "YYYY-MM-DD").format("DD MMM")}</p>
+
+                <WeatherIcon code={tripResult.weather.weather_code[index]} />
+
                 <p>Max: {tripResult.weather.temperature_2m_max[index]} ºC</p>
                 <p>Min: {tripResult.weather.temperature_2m_min[index]} ºC</p>
                 <p>Precipitation: {tripResult.weather.precipitation_sum[index] }  mm</p>
