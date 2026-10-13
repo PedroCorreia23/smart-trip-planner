@@ -35,7 +35,7 @@ class WeatherService:
                     temperature_2m_max=daily["temperature_2m_max"],
                     temperature_2m_min=daily["temperature_2m_min"],
                     precipitation_sum=daily["precipitation_sum"],
-                    weather_code=daily["weather_code"]
+                    weather_code=daily["weather_code"],
                 )
 
         except httpx.HTTPStatusError as exc:
