@@ -17,6 +17,7 @@ async def test_get_weather_success():
             "temperature_2m_max": [22.0, 21.0],
             "temperature_2m_min": [12.0, 11.0],
             "precipitation_sum": [0.0, 2.4],
+            "weather_code": [0, 61],
         }
     }
 
@@ -35,7 +36,35 @@ async def test_get_weather_success():
         temperature_2m_max=[22.0, 21.0],
         temperature_2m_min=[12.0, 11.0],
         precipitation_sum=[0.0, 2.4],
+        weather_code=[0, 61],
     )
+
+    mock_response = Mock()
+    mock_response.json.return_value = fake_api_response
+
+    with patch("httpx.AsyncClient.get", return_value=mock_response) as mock_get:
+        service = WeatherService()
+
+        resultado = await service.get_weather(
+            lat=48.8566,
+            lon=2.3522,
+            start_date=date(2026, 10, 10),
+            end_date=date(2026, 10, 11),
+        )
+
+    assert resultado == WeatherInfo(
+        time=["2026-10-10", "2026-10-11"],
+        temperature_2m_max=[22.0, 21.0],
+        temperature_2m_min=[12.0, 11.0],
+        precipitation_sum=[0.0, 2.4],
+        weather_code=[0, 61],
+    )
+
+    mock_get.assert_called_once()
+
+    requested_url = mock_get.call_args.args[0]
+
+    assert "daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&" in requested_url
 
 
 @pytest.mark.asyncio

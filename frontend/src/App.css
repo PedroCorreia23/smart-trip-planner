@@ -34,8 +34,8 @@
 /* Caixa branca principal */
 .search-box {
   background-color: white;  
-  width: 90%;                
-  max-width: 1200px;      
+  width: 100%;                
+  max-width: none;      
   border-radius: 16px; 
   box-sizing: border-box;      
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -143,6 +143,10 @@
   
   justify-content: flex-end;
 }
+.trip-search-form {
+  width: 90%;
+  box-sizing: border-box;
+}
 
 .results {
   box-sizing: border-box;
@@ -178,6 +182,11 @@
     justify-self: end;
 }
 
+  .weather-icon {
+    font-size: 3.5rem;
+    display: block;
+    margin: 0 auto;
+  }
 
 /* Responsive Design — Mobile */
 @media (max-width: 768px) {
@@ -228,4 +237,9 @@
     padding: 1rem;
   }
 
+  .weather-icon {
+    font-size: 5rem;
+    display: block;
+    margin: 0 auto;
+  }
 }

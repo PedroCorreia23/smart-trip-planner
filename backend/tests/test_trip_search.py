@@ -34,6 +34,7 @@ async def test_trip_search_success():
         temperature_2m_max=[20.0],
         temperature_2m_min=[10.0],
         precipitation_sum=[0.0],
+        weather_code=[0],
     )
 
     fake_exchange_rate = ExchangeRateInfo(base="EUR", target="USD", rate=1.18)
@@ -231,6 +232,7 @@ async def test_trip_search_same_currency():
         temperature_2m_max=[20.0],
         temperature_2m_min=[10.0],
         precipitation_sum=[0.0],
+        weather_code=[0],
     )
 
     geo_service.get_coordinates.side_effect = [origin_coords, destination_coords]
