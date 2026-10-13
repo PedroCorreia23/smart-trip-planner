@@ -177,3 +177,55 @@
     
     justify-self: end;
 }
+
+
+/* Responsive Design — Mobile */
+@media (max-width: 768px) {
+
+  .home-page {
+    padding-top: 30px;
+    gap: 20px;
+  }
+
+  .trip-search-form {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .search-box {
+    width: 90%;
+    max-width: none;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .input-group {
+    width: 100%;
+    flex: none;
+  }
+
+  .search-button-group {
+    width: 100%;
+  }
+
+  .trip-search-form button {
+    width: 100%;
+  }
+
+  .react-datepicker-wrapper {
+    width: 100%;
+  }
+
+  .weather {
+    gap: 20px;
+  }
+
+  .weather-card {
+    flex-basis: calc(50% - 10px);
+    box-sizing: border-box;
+    padding: 1rem;
+  }
+
+}
