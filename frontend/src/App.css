@@ -145,6 +145,7 @@
 }
 
 .results {
+  box-sizing: border-box;
   background-color: white;  
   width: 90%;                
   border-radius: 16px;       
@@ -152,4 +153,27 @@
   display: grid;            
   gap: 20px;                 
   padding: 25px;  
+}
+
+.weather {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 25px;
+}
+
+.weather-card {
+  box-sizing: border-box;
+  background-color: rgba(230, 226, 226, 0.678);
+  border-radius: 15px;
+  padding: 1%;
+  flex-basis: 15%;
+  border: solid rgb(86, 86, 86);
+}
+ 
+.currency {
+    
+    justify-self: end;
 }

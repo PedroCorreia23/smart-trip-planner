@@ -1,10 +1,10 @@
 export default function TripResults({ tripResult }) {
   return (
         <div className="results">
+          <h2>Weather Forecast</h2>
           <div className="weather">
-            <h2>Weather Forecast</h2>
             {tripResult.weather.time.map((date, index) => (
-              <div key={date}>
+              <div className="weather-card" key={date}>
                 <p>{date}</p>
                 <p>Max: {tripResult.weather.temperature_2m_max[index]} ºC</p>
                 <p>Min: {tripResult.weather.temperature_2m_min[index]} ºC</p>
