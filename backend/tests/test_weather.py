@@ -64,7 +64,10 @@ async def test_get_weather_success():
 
     requested_url = mock_get.call_args.args[0]
 
-    assert "daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&" in requested_url
+    assert (
+        "daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&"
+        in requested_url
+    )
 
 
 @pytest.mark.asyncio
