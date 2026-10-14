@@ -16,7 +16,9 @@ export default function Home() {
                             setErrorState={setErrorState} />
             
             {errorState && (
-                <p className="error-message">{errorState}</p>
+                <p className="error-message" role="alert">
+                    {errorState}
+                </p>
             )}
             {tripResult && (
               <TripResults tripResult={tripResult}/>
