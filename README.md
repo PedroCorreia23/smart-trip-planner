@@ -1,365 +1,343 @@
 # 🌍 Smart Trip Planner
 
-Smart Trip Planner is a backend API built with FastAPI that aggregates travel-related information from multiple external services.
+Smart Trip Planner is a full-stack web application built with **React** and **FastAPI** that brings useful travel information together in a simple, responsive interface.
 
-Given an origin, destination and travel dates, the API validates the trip and retrieves geographic information, weather data, currencies and exchange rates.
+Enter an origin, a destination, and travel dates to explore the destination's weather forecast, daily weather conditions, currencies, and exchange rates. The project emphasizes modular architecture, external API integrations, validation, testing, and maintainable code.
 
+> **Project status:** The trip-search experience is implemented. Points of interest and itinerary generation are planned for future versions, not available in the current release.
 
 ## ✨ Features
 
-- Trip validation with Pydantic
-- Geocoding for origin and destination
-- Weather forecast for the destination
-- Currency detection for origin and destination
-- Exchange rate calculation
-- Async external API integrations
-- Typed application models
-- Centralized error handling
-- Dependency injection with FastAPI
-- Environment-based configuration
-- Application and service logging
-- Automated tests with mocks
-- Ruff linting and formatting
-- GitHub Actions CI
+### For travelers
 
+- Search for a trip using an origin, destination, departure date, and arrival date.
+- View a daily destination weather forecast, including maximum and minimum temperatures and precipitation.
+- See weather-condition icons based on Open-Meteo's WMO weather codes.
+- Identify the origin and destination currencies and view their exchange rate.
+- Use a responsive interface on desktop and mobile.
+- Receive feedback during loading and clear messages when a request fails or form information is invalid.
 
-## 🏗️ Architecture
+### Engineering features
 
-The backend follows a modular monolithic architecture.
-
-Main layers:
-
-- API Layer — FastAPI endpoints and HTTP concerns
-- Application Layer — use cases and orchestration
-- Domain Models — Pydantic models and contracts
-- External Services — integrations with third-party APIs
-
-External integrations are isolated behind dedicated services.
-
+- React frontend powered by Vite.
+- FastAPI backend organized as a modular monolith.
+- Asynchronous integrations with external services using `httpx`.
+- Typed data contracts and request validation using Pydantic v2.
+- Dependency injection, centralized error handling, and logging.
+- Environment-based configuration.
+- Backend unit and API tests with mocked external services.
+- Ruff linting/formatting and a GitHub Actions backend CI pipeline.
 
 ## 🛠️ Tech Stack
 
-- Python 3.12
-- FastAPI
-- Pydantic v2
-- pydantic-settings
-- httpx
-- Pytest
-- pytest-cov
-- Ruff
-- GitHub Actions
+| Area | Technologies |
+| --- | --- |
+| Frontend | React, JavaScript, Vite, React DatePicker, React Icons, Moment.js, CSS |
+| Backend | Python 3.12, FastAPI, Pydantic v2, pydantic-settings, httpx |
+| Testing & quality | pytest, pytest-cov, Ruff, frontend lint/build scripts |
+| CI | GitHub Actions |
 
+## 🏗️ Architecture
+
+The frontend communicates with the FastAPI backend, which coordinates dedicated external-service adapters. The browser does **not** call the third-party travel APIs directly.
+
+```mermaid
+flowchart TD
+    UI[React + Vite Frontend] -->|POST /trips/search| API[FastAPI API Layer]
+    API --> APP[Trip Search Use Case]
+    APP --> GEO[Geocoding Service]
+    APP --> WEATHER[Weather Service]
+    APP --> CURR[Currency Service]
+    APP --> FX[Exchange Rate Service]
+    GEO --> NOM[Nominatim / OpenStreetMap]
+    WEATHER --> OM[Open-Meteo]
+    CURR --> COUNTRIES[countries.dev]
+    FX --> FRANK[Frankfurter]
+```
+
+### Backend layers
+
+- **API layer:** HTTP endpoints, request/response handling, and exception handlers.
+- **Application layer:** use cases and orchestration of services.
+- **Domain layer:** typed Pydantic models and validation rules.
+- **External services:** adapters for geocoding, weather, currencies, and exchange rates.
+- **Configuration:** centralized settings using `pydantic-settings`.
+
+The separation between layers makes third-party integrations easier to test and change without coupling them to the user interface.
 
 ## 🌐 External APIs
 
-- Nominatim / OpenStreetMap — geocoding
-- Open-Meteo — weather
-- countries.dev — currency information
-- Frankfurter — exchange rates
+| Provider | Purpose |
+| --- | --- |
+| [Nominatim / OpenStreetMap](https://nominatim.org/) | Resolve origin and destination to geographic coordinates and country information |
+| [Open-Meteo](https://open-meteo.com/) | Daily destination weather forecasts and WMO weather codes |
+| [countries.dev](https://countries.dev/) | Currency information for each country |
+| [Frankfurter](https://www.frankfurter.dev/) | Currency exchange rates |
 
+Weather forecasts are limited to the date range supported by the weather provider. Future travel dates outside that range may not have forecast data.
 
-## 🚀 Run Locally
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Python 3.12**
+- **Node.js and npm** compatible with the project's Vite version
+- Git
+
+You will need **two terminals**: one for the backend and another for the frontend.
 
 ### 1. Clone the repository
 
+```bash
 git clone https://github.com/PedroCorreia23/smart-trip-planner.git
-cd smart-trip-planner/backend
+cd smart-trip-planner
+```
 
+### 2. Set up the backend
 
-### 2. Create a virtual environment
+From the repository root:
 
-Windows:
-
+```bash
+cd backend
 python -m venv .venv
-.\.venv\Scripts\activate
+```
 
+Activate the virtual environment:
 
-Linux / macOS:
+**Windows PowerShell**
 
-python3 -m venv .venv
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+**Linux / macOS**
+
+```bash
 source .venv/bin/activate
+```
 
+Install dependencies:
 
-### 3. Install dependencies
-
+```bash
 pip install -r requirements.txt
+```
 
+Create your local environment configuration from the provided example:
 
-### 4. Environment configuration
+**Windows PowerShell**
 
-Copy the example environment file.
-
-Windows PowerShell:
-
+```powershell
 Copy-Item .env.example .env
+```
 
+**Linux / macOS**
 
-Linux / macOS:
-
+```bash
 cp .env.example .env
+```
 
+Review `backend/.env` if you need to adjust service URLs or HTTP settings. The example file defines the expected configuration structure.
 
-Default values are already provided for the external services.
+Start the API:
 
-
-### 5. Start the API
-
+```bash
 fastapi dev app/main.py
+```
 
+By default, the API is available at **http://127.0.0.1:8000** and its interactive documentation at **http://127.0.0.1:8000/docs**.
 
-Swagger documentation:
+### 3. Set up the frontend
 
-http://127.0.0.1:8000/docs
+Open a **second terminal** at the repository root:
 
+```bash
+cd frontend
+npm install
+```
 
-## 🔎 Main Endpoint
+Create the frontend environment file:
 
+**Windows PowerShell**
+
+```powershell
+Copy-Item .env.example .env
+```
+
+**Linux / macOS**
+
+```bash
+cp .env.example .env
+```
+
+Ensure `frontend/.env` contains the address of your running backend:
+
+```dotenv
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open the URL printed in the terminal (typically **http://localhost:5173**).
+
+> Variables prefixed with `VITE_` are included in client-side code. **Do not put API secrets, passwords, or private tokens in frontend environment variables.**
+
+### 4. Try a trip search
+
+With both servers running, enter two cities and dates within the weather forecast's supported range. Select **Search Trip** to see the results.
+
+## 🔎 API
+
+### Health check
+
+```http
+GET /health
+```
+
+Expected response:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+### Trip search
+
+```http
 POST /trips/search
+Content-Type: application/json
+```
 
+Example request (replace dates with dates supported by the forecast provider):
 
-Example request:
-
+```json
 {
   "origin": "Lisbon",
   "destination": "Paris",
-  "start_date": "2026-10-10",
-  "end_date": "2026-10-15"
+  "start_date": "YYYY-MM-DD",
+  "end_date": "YYYY-MM-DD"
 }
+```
 
+The response includes trip details, origin and destination coordinates, daily destination weather, origin and destination currency information, and the exchange rate.
 
-The response includes:
+The daily weather data includes these arrays, indexed by date:
 
-- Origin coordinates
-- Destination coordinates
-- Destination weather
-- Origin currency
-- Destination currency
-- Exchange rate
+```json
+{
+  "time": ["2026-10-14"],
+  "temperature_2m_max": [21.4],
+  "temperature_2m_min": [11.2],
+  "precipitation_sum": [0.0],
+  "weather_code": [0]
+}
+```
 
+*The weather values above are illustrative, not a live forecast.*
 
-## 🧪 Tests
+When both locations use the same currency, the exchange rate is `1.0`.
 
-Run the complete test suite:
+For full request/response schemas, visit `/docs` while the backend is running.
 
+## 🧪 Testing and Code Quality
+
+### Backend
+
+From `backend/` with the virtual environment activated:
+
+```bash
 python -m pytest
-
+```
 
 Run tests with coverage:
 
+```bash
 python -m pytest --cov=app --cov-report=term-missing
+```
 
+Run Ruff:
 
-Current test suite:
+```bash
+ruff check .
+ruff format --check .
+```
 
-27 automated tests
+The backend suite currently contains **27 automated tests**, covering geocoding, weather, currencies, exchange rates, orchestration, validation, and FastAPI endpoints. Tests mock third-party services so they do not require live API requests.
 
-Current coverage:
+### Frontend
 
-Approximately 99%
+From `frontend/`:
 
+```bash
+npm run lint
+npm run build
+```
 
-## ✅ Code Quality
+The interface has also been manually checked for form validation, loading/errors, keyboard submission, trip results, and responsive layouts.
 
-Run Ruff linting:
+### Continuous Integration
 
-ruff check app tests
+GitHub Actions runs backend checks on pushes and pull requests to `main`, including Ruff and pytest. Frontend commands can be executed locally as shown above; do not assume they are part of CI unless the workflow is updated to include them.
 
+## ⚠️ Error Handling and Validation
 
-Check formatting:
+- Trip inputs are validated by Pydantic on the backend.
+- The frontend validates required fields and date order before sending a request.
+- Unknown locations return an HTTP `404` response.
+- Unavailable external services can return an HTTP `502` response.
+- User-facing loading and error states are displayed in the frontend.
+- Service failures and relevant application events are logged without intentionally logging sensitive settings.
 
-ruff format --check app tests
+## 📁 Project Organization
 
+```text
+smart-trip-planner/
+├── backend/
+│   ├── app/
+│   │   ├── application/       # Trip-search orchestration
+│   │   ├── domain/            # Pydantic models / contracts
+│   │   ├── services/          # Third-party API adapters
+│   │   ├── config.py          # Application settings
+│   │   └── main.py            # FastAPI application
+│   ├── tests/                 # Backend automated tests
+│   ├── .env.example
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── components/        # Form, results, weather icons
+│   │   └── utils/             # Weather-code mapping
+│   ├── .env.example
+│   └── package.json
+└── README.md
+```
 
-Format automatically:
+*This tree highlights the main parts of the project rather than every file.*
 
-ruff format app tests
+## 🗺️ Roadmap
 
+### Implemented
 
-## 🔄 Continuous Integration
+- Trip definition and validation
+- Geocoding for origin and destination
+- Daily destination weather forecasts and condition icons
+- Currency information and exchange rate retrieval
+- Responsive React frontend
+- Backend tests and CI checks
 
-GitHub Actions automatically runs the backend CI pipeline on pushes and pull requests to the main branch.
+### Planned
 
-The pipeline validates:
+- **Points of interest:** discover and select attractions in a destination.
+- **Itinerary generation:** build itineraries from selected places.
+- **Route optimization:** arrange stops efficiently, potentially considering travel times.
+- **Additional trip context:** opening hours, visit durations, and user preferences.
+- **Persistence:** saved trips and possible PostgreSQL integration.
 
-- Ruff linting
-- Ruff formatting
-- Pytest automated tests
+Direct origin-to-destination distance calculation was deferred because it adds limited value to the current trip-search workflow; distance may be more useful for future route planning.
 
+## 📄 Repository
 
-## 📌 V1 Scope
-
-Implemented:
-
-RF01 — Define trip
-
-The user can provide:
-
-- Origin
-- Destination
-- Start date
-- End date
-
-
-RF02 — Geographic location
-
-The system obtains geographic coordinates and country information for the origin and destination using Nominatim / OpenStreetMap.
-
-
-RF03 — Weather information
-
-The system obtains weather information for the destination during the selected travel period using Open-Meteo.
-
-
-RF05 — Currency information
-
-The system determines the currencies used at both the origin and destination.
-
-
-RF06 — Currency conversion
-
-The system retrieves the exchange rate between the origin currency and destination currency.
-
-When both locations use the same currency, the exchange rate is set to 1.0.
-
-
-Deferred:
-
-RF04 — Distance between origin and destination
-
-This requirement was intentionally deferred from V1 because displaying the direct geographic distance between two cities does not currently provide enough value to the main use case.
-
-Distance calculation may become more useful in future versions when optimizing routes between points of interest within a destination.
-
-
-## 🧱 Backend Structure
-
-The backend is organized into different responsibilities.
-
-API Layer
-
-Responsible for:
-
-- HTTP endpoints
-- FastAPI
-- Dependency injection
-- HTTP responses
-- Exception handlers
-
-
-Application Layer
-
-Responsible for:
-
-- Application use cases
-- Trip search orchestration
-- Service contracts / protocols
-
-
-Domain Layer
-
-Responsible for:
-
-- Pydantic models
-- Typed application data
-- Trip validation
-
-
-External Services
-
-Responsible for integrations with:
-
-- Geocoding API
-- Weather API
-- Currency API
-- Exchange rate API
-
-
-Configuration
-
-Application configuration is centralized using pydantic-settings.
-
-Configuration can be provided using environment variables or a .env file.
-
-The repository contains a .env.example file with the expected configuration structure.
-
-
-## ⚠️ Error Handling
-
-External API errors are isolated from the application logic.
-
-The application defines custom exceptions such as:
-
-- ExternalServiceError
-- LocationNotFoundError
-- CurrencyUnavailableError
-
-FastAPI exception handlers convert these application errors into appropriate HTTP responses.
-
-Examples:
-
-Location not found → HTTP 404
-
-External service unavailable → HTTP 502
-
-
-## 📊 Logging
-
-The application uses Python's logging system.
-
-Logging is implemented for:
-
-- Trip search requests
-- Location errors
-- Currency errors
-- External API failures
-
-Sensitive configuration values are not included in logs.
-
-
-## 🧪 Testing Strategy
-
-Tests use mocks so that the automated test suite does not depend on real external APIs.
-
-The test suite covers:
-
-- Trip validation
-- Geocoding
-- Weather
-- Currency retrieval
-- Exchange rates
-- Trip search orchestration
-- Error handling
-- FastAPI endpoints
-- Dependency injection behavior
-
-Current coverage is approximately 99%.
-
-
-## 🗺️ Future Versions
-
-V2 — Points of Interest
-
-Allow users to search and select relevant places to visit at the destination.
-
-
-V3 — Itinerary Generation
-
-Automatically generate an itinerary using the selected points of interest.
-
-
-Future improvements may include:
-
-- Route optimization between locations
-- Opening hours
-- Visit duration
-- User preferences
-- Saved trips
-- Persistent storage
-- PostgreSQL integration
-
-
-## 📂 Repository
-
-GitHub:
-
-https://github.com/PedroCorreia23/smart-trip-planner
+[Smart Trip Planner on GitHub](https://github.com/PedroCorreia23/smart-trip-planner)
