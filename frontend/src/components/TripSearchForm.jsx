@@ -13,20 +13,34 @@ export default function TripSearchForm({ setTripResult, loadingState, setLoading
     const [originPlace, setOriginPlace] = useState("")
     const [destinationPlace, setDestinationPlace] = useState("")
 
-    const handleSearch = async () => {
-        try {
-            setLoadingState(true)
-            setErrorState(null)
-            setTripResult(null)
+    const handleSearch = async (event) => {
+        event.preventDefault();
+        setErrorState(null)
 
-            const trip = {
-            origin: originPlace,
-            destination: destinationPlace,
-            start_date: moment(departureDate).format("YYYY-MM-DD"),
-            end_date: moment(arrivalDate).format("YYYY-MM-DD")
+            if (!originPlace.trim() || !destinationPlace.trim() || !departureDate || !arrivalDate) {
+                setErrorState("Please fill in all fields.");
+                return;
             }
 
-            const response = await fetch("http://127.0.0.1:8000/trips/search", {
+            if (arrivalDate < departureDate) {
+                setErrorState("Arrival date cannot be before departure date.");
+                return;
+            }
+
+            setLoadingState(true);
+            setTripResult(null);
+
+        try {
+            
+
+            const trip = {
+                origin: originPlace,
+                destination: destinationPlace,
+                start_date: moment(departureDate).format("YYYY-MM-DD"),
+                end_date: moment(arrivalDate).format("YYYY-MM-DD")
+            }
+
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/trips/search`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -51,12 +65,12 @@ export default function TripSearchForm({ setTripResult, loadingState, setLoading
 
     return (
         <main className="trip-search-form">
-            <div className="search-box">
+            <form className="search-box" onSubmit={handleSearch}>
 
                 <div className="input-group">
                     <label htmlFor="origin">Origin</label>
                     <div className="input-with-icon">
-                        <FaLocationDot className="location-icon" />
+                        <FaLocationDot className="location-icon" aria-hidden="true"/>
                         <input
                             id="origin"
                             type="text"
@@ -70,7 +84,7 @@ export default function TripSearchForm({ setTripResult, loadingState, setLoading
                 <div className="input-group">
                     <label htmlFor="destination">Destination</label>
                     <div className="input-with-icon">
-                        <FaLocationDot className="location-icon" />
+                        <FaLocationDot className="location-icon" aria-hidden="true"/>
                         <input
                             id="destination"
                             type="text"
@@ -84,9 +98,10 @@ export default function TripSearchForm({ setTripResult, loadingState, setLoading
                 <div className="input-group">
                     <label htmlFor="departure-date"> Departure Date</label>
                     <div className="input-with-icon">
-                        <FaCalendarDays className="date-icon" />
+                        <FaCalendarDays className="date-icon" aria-hidden="true"/>
 
                         <DatePicker
+                        id="departure-date"
                         selected={departureDate}
                         onChange={(date) => setDepartureDate(date)}
                         placeholderText="Select date"
@@ -100,9 +115,10 @@ export default function TripSearchForm({ setTripResult, loadingState, setLoading
                     <label htmlFor="arrival-date"> Arrival Date</label>
                     <div className="input-with-icon">
                         
-                        <FaCalendarDays className="date-icon" />
+                        <FaCalendarDays className="date-icon" aria-hidden="true"/>
 
                         <DatePicker
+                        id="arrival-date"
                         selected={arrivalDate}
                         onChange={(date) => setArrivalDate(date)}
                         placeholderText="Select date"
@@ -116,13 +132,13 @@ export default function TripSearchForm({ setTripResult, loadingState, setLoading
 
                 <div className="input-group search-button-group">
                     <div className="input-with-icon">
-                        <FaSearchengin className="date-icon" />
-                        <button onClick={handleSearch} disabled={loadingState}>
+                        <FaSearchengin className="date-icon" aria-hidden="true"/>
+                        <button type="submit" disabled={loadingState}>
                             {loadingState ? "Searching..." : "Search Trip"}
                         </button>
                     </div>
                 </div>
-            </div>
+            </form>
         </main>
   );
 }
