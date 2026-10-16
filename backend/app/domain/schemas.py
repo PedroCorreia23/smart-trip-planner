@@ -55,3 +55,11 @@ class TripSearchResponse(BaseModel):
     origin_currency: CurrencyInfo
     destination_currency: CurrencyInfo
     exchange_rate: ExchangeRateInfo
+
+
+class POIInfo(BaseModel):
+    id: int
+    name: str
+    category: str
+    lat: float
+    lon: float
