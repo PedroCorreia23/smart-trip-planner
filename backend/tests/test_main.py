@@ -180,3 +180,23 @@ def test_search_pois_success():
         ]
     finally:
         app.dependency_overrides.pop(get_poi_search_use_case, None)
+
+def test_search_pois_empty():
+
+    fake_use_case = AsyncMock()
+    fake_use_case.execute.return_value = []
+
+    app.dependency_overrides[get_poi_search_use_case] = lambda: fake_use_case
+    try:
+        response = client.get(
+            "/pois",
+            params={"lat": 48.8566, "lon": 2.3522, "radius": 1000},
+        )
+
+        assert response.status_code == 200
+        assert response.json() == []
+        
+        fake_use_case.execute.assert_awaited_once_with(48.8566, 2.3522, 1000)
+
+    finally:
+        app.dependency_overrides.pop(get_poi_search_use_case, None)
