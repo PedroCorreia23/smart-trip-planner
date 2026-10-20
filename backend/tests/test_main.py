@@ -2,8 +2,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
+from app.domain.schemas import POIInfo
 
-from app.dependencies import get_trip_search_use_case
+from app.dependencies import get_trip_search_use_case, get_poi_search_use_case
 from app.exceptions import (
     CurrencyUnavailableError,
     ExternalServiceError,
@@ -145,3 +146,37 @@ def test_search_trip_currency_unavailable():
 
     assert response.status_code == 502
     assert response.json() == {"detail": "Could not retrieve destination currency."}
+
+
+def test_search_pois_success():
+
+    fake_use_case = AsyncMock()
+    fake_use_case.execute.return_value = [ 
+        POIInfo(
+            id=123,
+            name="Paris Museum",
+            category="museum",
+            lat=48.8566,
+            lon=2.3522,
+        )
+    ]
+
+    app.dependency_overrides[get_poi_search_use_case] = lambda: fake_use_case
+    try:
+        response = client.get(
+            "/pois",
+            params={"lat": 48.8566, "lon": 2.3522},
+        )
+
+        assert response.status_code == 200
+        assert response.json() == [
+            {
+                "id": 123,
+                "name": "Paris Museum",
+                "category": "museum",
+                "lat": 48.8566,
+                "lon": 2.3522,
+            }
+        ]
+    finally:
+        app.dependency_overrides.pop(get_poi_search_use_case, None)

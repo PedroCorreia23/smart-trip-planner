@@ -3,16 +3,20 @@ import logging
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi import Query
 
 from app.application.trip_search import TripSearchUseCase
-from app.dependencies import get_trip_search_use_case
-from app.domain.schemas import TripQuery, TripSearchResponse
+from app.dependencies import get_trip_search_use_case, get_poi_search_use_case
+from app.domain.schemas import TripQuery, TripSearchResponse, POIInfo
+
 from app.exceptions import (
     CurrencyUnavailableError,
     ExternalServiceError,
     LocationNotFoundError,
 )
 from app.logging_config import configure_logging
+
+from app.application.poi_search import POISearchUseCase
 
 configure_logging()
 
@@ -39,6 +43,16 @@ async def root():
 async def health_check():
     return {"status": "ok"}
 
+@app.get("/pois", response_model=list[POIInfo])
+async def search_pois(
+
+    lat: float = Query(..., ge=-90, le=90, description="Latitude of the destination"),
+    lon: float = Query(..., ge=-180, le=180, description="Longetiude of the destination"),
+    radius: int = Query(default=5000, ge=100, le=10000),
+    use_case: POISearchUseCase = Depends(get_poi_search_use_case)
+):
+    logger.info("Points of interest requested: lat=%s lon=%s radius=%s", lat, lon, radius,)
+    return await use_case.execute(lat, lon, radius)
 
 @app.post("/trips/search", response_model=TripSearchResponse)
 async def search_trip(
