@@ -9,6 +9,7 @@ from app.domain.schemas import (
     WeatherInfo,
 )
 
+
 class GeocodingPort(Protocol):
     async def get_coordinates(self, city_name: str) -> Coordinates | None: ...
 
