@@ -20,7 +20,7 @@ class POIService:
         """
 
         try:
-            async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
+            async with httpx.AsyncClient(timeout=settings.OVERPASS_TIMEOUT) as client:
                 response = await client.post(
                     url,
                     data={"data": query},
@@ -68,5 +68,9 @@ class POIService:
             logger.error("POIS API returned HTTP error: status=%s", exc.response.status_code)
             raise ExternalServiceError("POIS service returned an HTTP error.") from exc
         except httpx.RequestError as exc:
-            logger.error("POIS API  request failed: %s", exc)
+            logger.error(
+                "POI API request failed: type=%s error=%r",
+                type(exc).__name__,
+                exc,
+            )
             raise ExternalServiceError("POI service is unavailable.") from exc
