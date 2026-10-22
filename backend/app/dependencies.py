@@ -1,7 +1,9 @@
+from app.application.poi_search import POISearchUseCase
 from app.application.trip_search import TripSearchUseCase
 from app.services.currency import CurrencyService
 from app.services.exchange_rate import ExchangeRateService
 from app.services.geocoding import GeocodingService
+from app.services.poi import POIService
 from app.services.weather import WeatherService
 
 
@@ -12,3 +14,7 @@ def get_trip_search_use_case() -> TripSearchUseCase:
         currency_service=CurrencyService(),
         exchange_rate_service=ExchangeRateService(),
     )
+
+
+def get_poi_search_use_case() -> POISearchUseCase:
+    return POISearchUseCase(poi_service=POIService())

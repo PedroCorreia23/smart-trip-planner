@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     COUNTRIES_BASE_URL: str = "https://countries.dev"
     FRANKFURTER_BASE_URL: str = "https://api.frankfurter.dev"
 
+    OVERPASS_BASE_URL: str = "https://overpass-api.de/api"
+    OVERPASS_TIMEOUT: float = 30.0
+
     HTTP_TIMEOUT: float = 5.0
     USER_AGENT: str = "SmartTripPlanner/0.1"
 

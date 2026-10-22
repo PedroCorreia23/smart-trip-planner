@@ -5,6 +5,7 @@ from app.domain.schemas import (
     Coordinates,
     CurrencyInfo,
     ExchangeRateInfo,
+    POIInfo,
     WeatherInfo,
 )
 
@@ -27,3 +28,7 @@ class ExchangeRatePort(Protocol):
     async def get_rate(
         self, base_currency: str, target_currency: str
     ) -> ExchangeRateInfo | None: ...
+
+
+class POIPort(Protocol):
+    async def get_pois(self, lat: float, lon: float, radius: int = 5000) -> list[POIInfo]: ...
