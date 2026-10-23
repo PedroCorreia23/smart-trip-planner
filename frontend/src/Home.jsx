@@ -8,6 +8,10 @@ export default function Home() {
     const [loadingState, setLoadingState] = useState(false)
     const [errorState, setErrorState] = useState(null)
 
+    const [poiResults, setPoiResults] = useState([])
+    const [poiLoading, setPoiLoading] = useState(false)
+    const [poiError, setPoiError] = useState(null)
+
     return (
         <div className="home-page">
             <TripSearchForm setTripResult={setTripResult}
