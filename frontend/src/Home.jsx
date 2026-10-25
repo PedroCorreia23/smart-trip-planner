@@ -18,8 +18,30 @@ export default function Home() {
             return
         }
 
-        // Aqui vamos pesquisar os POIs
+        const lat = tripResult.destination_coordinates.lat
+        const lon = tripResult.destination_coordinates.lon
 
+        const fetchPOIs = async () => {
+
+            try {
+
+                const url = `${import.meta.env.VITE_API_BASE_URL}/pois?lat=${lat}&lon=${lon}&radius=5000`
+                const response = await fetch(url)
+
+                if (!response.ok) {
+                    const poiError = await response.json()
+                    throw new Error(poiError.detail || "An unexpected error occurred.")
+                }
+
+                const data = await response.json()
+                setPoiResults(data)
+
+            } catch (error) {
+                setPoiErrorpoiError(error.message)
+            }finally {
+                setPoiLoading(false) 
+        }
+        fetchPOIs()
     }, [tripResult])
   
     return (
