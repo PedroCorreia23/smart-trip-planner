@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import "./App.css"
 import TripSearchForm from "./components/TripSearchForm"
 import TripResults  from "./components/TripResults"
@@ -12,6 +12,16 @@ export default function Home() {
     const [poiLoading, setPoiLoading] = useState(false)
     const [poiError, setPoiError] = useState(null)
 
+    useEffect(() => {
+        if (!tripResult) {
+            setPoiResults([])
+            return
+        }
+
+        // Aqui vamos pesquisar os POIs
+
+    }, [tripResult])
+  
     return (
         <div className="home-page">
             <TripSearchForm setTripResult={setTripResult}
