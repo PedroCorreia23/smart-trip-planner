@@ -32,6 +32,11 @@ export default function Home() {
                     const poiError = await response.json()
                     throw new Error(poiError.detail || "An unexpected error occurred.")
                 }
+                if (!tripResult) {
+                    setPoiResults([])
+                    setPoiError(null)
+                    return
+                }
 
                 const data = await response.json()
                 setPoiResults(data)
@@ -42,6 +47,7 @@ export default function Home() {
                 setPoiLoading(false) 
         }
         fetchPOIs()
+        }
     }, [tripResult])
   
     return (
