@@ -25,6 +25,10 @@ export default function Home() {
 
             try {
 
+                setPoiLoading(true)
+                setPoiError(null)
+                setPoiResults([])
+
                 const url = `${import.meta.env.VITE_API_BASE_URL}/pois?lat=${lat}&lon=${lon}&radius=5000`
                 const response = await fetch(url)
 
