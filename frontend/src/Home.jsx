@@ -15,6 +15,8 @@ export default function Home() {
     useEffect(() => {
         if (!tripResult) {
             setPoiResults([])
+            setPoiError(null)
+            setPoiLoading(false)
             return
         }
 
