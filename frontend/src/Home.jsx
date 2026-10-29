@@ -48,6 +48,7 @@ export default function Home() {
                 setPoiResults(data)
 
             } catch (error) {
+                console.error("Failed to fetch POIs:", error)
                 setPoiErrorpoiError(error.message)
             }finally {
                 setPoiLoading(false) 
