@@ -20,6 +20,7 @@ export default function Home() {
 
         const lat = tripResult.destination_coordinates.lat
         const lon = tripResult.destination_coordinates.lon
+        const controller = new AbortController()
 
         const fetchPOIs = async () => {
 
@@ -30,32 +31,40 @@ export default function Home() {
                 setPoiResults([])
 
                 const url = `${import.meta.env.VITE_API_BASE_URL}/pois?lat=${lat}&lon=${lon}&radius=5000`
-                const response = await fetch(url)
-
+                const response = await fetch(url, {signal: controller.signal})
+                
                 if (!response.ok) {
-                    const poiError = await response.json()
-                    throw new Error(poiError.detail || "An unexpected error occurred.")
-                }
-                if (!tripResult) {
-                    setPoiResults([])
-                    setPoiError(null)
-                    return
+                    const errorData = await response.json()
+                    throw new Error(errorData.detail || "An unexpected error occurred.")
                 }
 
                 const data = await response.json()
-                setPoiResults(data)
+                if (!controller.signal.aborted) {
+                    setPoiResults(data)
+                }
 
             } catch (error) {
+                if (controller.signal.aborted) {
+                    return
+                }
                 console.error("Failed to fetch POIs:", error)
                 setPoiError(error.message)
+                
             }finally {
-                setPoiLoading(false) 
+                if (!controller.signal.aborted) {
+                    setPoiLoading(false)
+                } 
+            }
         }
         fetchPOIs()
+        return () => {
+            controller.abort()
         }
+        
     }, [tripResult])
   
     return (
+        
         <div className="home-page">
             <TripSearchForm setTripResult={setTripResult}
                             loadingState={loadingState}
