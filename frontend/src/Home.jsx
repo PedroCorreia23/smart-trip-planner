@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import "./App.css"
 import TripSearchForm from "./components/TripSearchForm"
 import TripResults  from "./components/TripResults"
+import POIResults from "./components/POIResults"
 
 export default function Home() {
     const [tripResult, setTripResult] = useState(null)
@@ -14,9 +15,6 @@ export default function Home() {
 
     useEffect(() => {
         if (!tripResult) {
-            setPoiResults([])
-            setPoiError(null)
-            setPoiLoading(false)
             return
         }
 
@@ -49,7 +47,7 @@ export default function Home() {
 
             } catch (error) {
                 console.error("Failed to fetch POIs:", error)
-                setPoiErrorpoiError(error.message)
+                setPoiError(error.message)
             }finally {
                 setPoiLoading(false) 
         }
@@ -70,7 +68,17 @@ export default function Home() {
                 </p>
             )}
             {tripResult && (
-              <TripResults tripResult={tripResult}/>
+                <>
+                    <TripResults tripResult={tripResult} />
+
+                    {poiLoading && <p role="status">Loading places...</p>}
+
+                    {poiError && <p role="alert">{poiError}</p>}
+
+                    {!poiLoading && !poiError && (
+                        <POIResults pois={poiResults} />
+                    )}
+                </>
             )}
         </div>
     )
