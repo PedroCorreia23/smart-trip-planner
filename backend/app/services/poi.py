@@ -11,49 +11,43 @@ logger = logging.getLogger(__name__)
 
 class POIService:
     async def get_pois(self, lat: float, lon: float, radius: int = 5000) -> list[POIInfo]:
-        url = f"{settings.OVERPASS_BASE_URL}/interpreter"
-        headers = {"User-Agent": settings.USER_AGENT}
-        query = f"""
-            [out:json];
-            nwr["tourism"="museum"](around:{radius},{lat},{lon});
-            out center;
-        """
+        url = f"{settings.GEOAPIFY_BASE_URL}/places"
+        params = {
+            "categories": "entertainment.museum",
+            "filter": f"circle:{lon},{lat},{radius}",
+            "limit": 20,
+            "apiKey": settings.GEOAPIFY_API_KEY,
+        }
 
         try:
-            async with httpx.AsyncClient(timeout=settings.OVERPASS_TIMEOUT) as client:
-                response = await client.post(
-                    url,
-                    data={"data": query},
-                    headers=headers,
-                )
+            async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
+                response = await client.get(url, params=params)
 
                 response.raise_for_status()
                 data = response.json()
 
                 pois = []
 
-                for element in data["elements"]:
-                    name = element.get("tags", {}).get("name")
+                for feature in data["features"]:
+                    properties = feature.get("properties", {})
+
+                    name = properties.get("name")
 
                     if not name:
                         continue
 
-                    category = element["tags"]["tourism"]
+                    place_id = properties.get("place_id")
+                    poi_lat = properties.get("lat")
+                    poi_lon = properties.get("lon")
 
-                    if element["type"] == "node":
-                        poi_lat = element["lat"]
-                        poi_lon = element["lon"]
-                    else:
-                        center = element.get("center")
+                    if not place_id or poi_lat is None or poi_lon is None:
+                        continue
 
-                        if not center:
-                            continue
-
-                        poi_lat = center["lat"]
-                        poi_lon = center["lon"]
+                    categories = properties.get("categories", [])
+                    category = categories[0] if categories else "unknown"
 
                     poi = POIInfo(
-                        id=element["id"],
+                        id=place_id,
                         name=name,
                         category=category,
                         lat=poi_lat,

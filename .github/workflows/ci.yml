@@ -46,5 +46,7 @@ jobs:
 
       # 6. Corre os testes automatizados
       - name: Run Pytest
+        env:
+          GEOAPIFY_API_KEY: test-api-key
         run: |
           python -m pytest
