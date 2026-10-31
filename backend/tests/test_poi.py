@@ -167,6 +167,7 @@ async def test_get_pois_http_error(mock_geoapify):
     with pytest.raises(ExternalServiceError, match="HTTP error"):
         await POIService().get_pois(48.8566, 2.3522)
 
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("error_type", [httpx.ConnectError, httpx.ReadTimeout])
 async def test_get_pois_request_error(mock_geoapify, error_type):
