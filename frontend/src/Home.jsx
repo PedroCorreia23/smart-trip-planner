@@ -34,10 +34,21 @@ export default function Home() {
                 const response = await fetch(url, {signal: controller.signal})
                 
                 if (!response.ok) {
-                    const errorData = await response.json()
-                    throw new Error(errorData.detail || "An unexpected error occurred.")
-                }
+                    let errorMessage = "An unexpected error occurred."
 
+                    try {
+                        const errorData = await response.json()
+                        errorMessage = errorData.detail || errorMessage
+
+                        
+                    } catch {
+                        // Keep the default error message if JSON parsing fails
+
+                    }
+
+                    throw new Error(errorMessage)
+                }
+                    
                 const data = await response.json()
                 if (!controller.signal.aborted) {
                     setPoiResults(data)
