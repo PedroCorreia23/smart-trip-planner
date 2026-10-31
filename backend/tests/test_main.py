@@ -149,19 +149,19 @@ def test_search_trip_currency_unavailable():
 
 
 def test_search_pois_success():
-
     fake_use_case = AsyncMock()
     fake_use_case.execute.return_value = [
         POIInfo(
-            id=123,
+            id="123",
             name="Paris Museum",
-            category="museum",
+            category="entertainment.museum",
             lat=48.8566,
             lon=2.3522,
         )
     ]
 
     app.dependency_overrides[get_poi_search_use_case] = lambda: fake_use_case
+
     try:
         response = client.get(
             "/pois",
@@ -171,13 +171,14 @@ def test_search_pois_success():
         assert response.status_code == 200
         assert response.json() == [
             {
-                "id": 123,
+                "id": "123",
                 "name": "Paris Museum",
-                "category": "museum",
+                "category": "entertainment.museum",
                 "lat": 48.8566,
                 "lon": 2.3522,
             }
         ]
+
     finally:
         app.dependency_overrides.pop(get_poi_search_use_case, None)
 
