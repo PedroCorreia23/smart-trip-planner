@@ -9,14 +9,14 @@ from app.services.poi import POIService
 
 
 @pytest.fixture
-def mock_overpass():
-    """Mock the Overpass request without making an HTTP call."""
+def mock_geoapify():
+    """Mock Geoapify requests without making real HTTP calls."""
     response = MagicMock()
     response.raise_for_status.return_value = None
-    response.json.return_value = {"elements": []}
+    response.json.return_value = {"features": []}
 
     client = AsyncMock()
-    client.post.return_value = response
+    client.get.return_value = response
 
     context_manager = AsyncMock()
     context_manager.__aenter__.return_value = client
@@ -26,16 +26,19 @@ def mock_overpass():
 
 
 @pytest.mark.asyncio
-async def test_get_pois_node(mock_overpass):
-    client, response = mock_overpass
+async def test_get_pois_success(mock_geoapify):
+    client, response = mock_geoapify
+
     response.json.return_value = {
-        "elements": [
+        "features": [
             {
-                "type": "node",
-                "id": 101,
-                "lat": 48.8606,
-                "lon": 2.3376,
-                "tags": {"name": "Example Museum", "tourism": "museum"},
+                "properties": {
+                    "place_id": "museum-101",
+                    "name": "Example Museum",
+                    "categories": ["entertainment.museum"],
+                    "lat": 48.8606,
+                    "lon": 2.3376,
+                }
             }
         ]
     }
@@ -44,46 +47,65 @@ async def test_get_pois_node(mock_overpass):
 
     assert len(pois) == 1
     assert pois[0] == POIInfo(
-        id=101, name="Example Museum", category="museum", lat=48.8606, lon=2.3376
+        id="museum-101",
+        name="Example Museum",
+        category="entertainment.museum",
+        lat=48.8606,
+        lon=2.3376,
     )
-    assert client.post.await_count == 1
-    assert "around:5000,48.8566,2.3522" in client.post.await_args.kwargs["data"]["data"]
+
+    client.get.assert_awaited_once()
+
+    params = client.get.await_args.kwargs["params"]
+
+    assert params["categories"] == "entertainment.museum"
+    assert params["filter"] == "circle:2.3522,48.8566,5000"
+    assert params["limit"] == 20
 
 
 @pytest.mark.asyncio
-async def test_get_pois_way_with_center(mock_overpass):
-    _, response = mock_overpass
-    response.json.return_value = {
-        "elements": [
-            {
-                "type": "way",
-                "id": 202,
-                "center": {"lat": 48.861, "lon": 2.336},
-                "tags": {"name": "Museum Building", "tourism": "museum"},
-            }
-        ]
-    }
+async def test_get_pois_custom_radius(mock_geoapify):
+    client, response = mock_geoapify
 
-    pois = await POIService().get_pois(48.8566, 2.3522, radius=1000)
+    response.json.return_value = {"features": []}
 
-    assert len(pois) == 1
-    assert pois[0].lat == 48.861
-    assert pois[0].lon == 2.336
-    assert pois[0].name == "Museum Building"
+    pois = await POIService().get_pois(
+        48.8566,
+        2.3522,
+        radius=1000,
+    )
+
+    assert pois == []
+
+    client.get.assert_awaited_once()
+
+    params = client.get.await_args.kwargs["params"]
+
+    assert params["filter"] == "circle:2.3522,48.8566,1000"
 
 
 @pytest.mark.asyncio
-async def test_get_pois_skips_unnamed_elements(mock_overpass):
-    _, response = mock_overpass
+async def test_get_pois_skips_unnamed_features(mock_geoapify):
+    _, response = mock_geoapify
+
     response.json.return_value = {
-        "elements": [
-            {"type": "node", "id": 1, "lat": 48.8, "lon": 2.3, "tags": {"tourism": "museum"}},
+        "features": [
             {
-                "type": "node",
-                "id": 2,
-                "lat": 48.9,
-                "lon": 2.4,
-                "tags": {"name": "Named Museum", "tourism": "museum"},
+                "properties": {
+                    "place_id": "museum-1",
+                    "categories": ["entertainment.museum"],
+                    "lat": 48.8,
+                    "lon": 2.3,
+                }
+            },
+            {
+                "properties": {
+                    "place_id": "museum-2",
+                    "name": "Named Museum",
+                    "categories": ["entertainment.museum"],
+                    "lat": 48.9,
+                    "lon": 2.4,
+                }
             },
         ]
     }
@@ -91,46 +113,74 @@ async def test_get_pois_skips_unnamed_elements(mock_overpass):
     pois = await POIService().get_pois(48.8566, 2.3522)
 
     assert len(pois) == 1
-    assert pois[0].id == 2
+    assert pois[0].id == "museum-2"
+    assert pois[0].name == "Named Museum"
 
 
 @pytest.mark.asyncio
-async def test_get_pois_skips_way_without_center(mock_overpass):
-    _, response = mock_overpass
+async def test_get_pois_skips_missing_coordinates(mock_geoapify):
+    _, response = mock_geoapify
+
     response.json.return_value = {
-        "elements": [{"type": "way", "id": 3, "tags": {"name": "No Center", "tourism": "museum"}}]
+        "features": [
+            {
+                "properties": {
+                    "place_id": "museum-3",
+                    "name": "Museum Without Coordinates",
+                    "categories": ["entertainment.museum"],
+                }
+            }
+        ]
     }
 
+    pois = await POIService().get_pois(48.8566, 2.3522)
+
+    assert pois == []
+
+
+@pytest.mark.asyncio
+async def test_get_pois_empty_response(mock_geoapify):
+    _, response = mock_geoapify
+
+    response.json.return_value = {"features": []}
+
     assert await POIService().get_pois(48.8566, 2.3522) == []
 
 
 @pytest.mark.asyncio
-async def test_get_pois_empty_response(mock_overpass):
-    _, response = mock_overpass
-    response.json.return_value = {"elements": []}
+async def test_get_pois_http_error(mock_geoapify):
+    _, response = mock_geoapify
 
-    assert await POIService().get_pois(48.8566, 2.3522) == []
+    request = httpx.Request(
+        "GET",
+        "https://api.geoapify.com/v2/places",
+    )
 
-
-@pytest.mark.asyncio
-async def test_get_pois_http_error(mock_overpass):
-    _, response = mock_overpass
-    request = httpx.Request("POST", "https://overpass-api.de/api/interpreter")
     error_response = httpx.Response(503, request=request)
+
     response.raise_for_status.side_effect = httpx.HTTPStatusError(
-        "Service Unavailable", request=request, response=error_response
+        "Service Unavailable",
+        request=request,
+        response=error_response,
     )
 
     with pytest.raises(ExternalServiceError, match="HTTP error"):
         await POIService().get_pois(48.8566, 2.3522)
 
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("error_type", [httpx.ConnectError, httpx.ReadTimeout])
-async def test_get_pois_request_error(mock_overpass, error_type):
-    client, _ = mock_overpass
-    request = httpx.Request("POST", "https://overpass-api.de/api/interpreter")
-    client.post.side_effect = error_type("Connection failed", request=request)
+async def test_get_pois_request_error(mock_geoapify, error_type):
+    client, _ = mock_geoapify
+
+    request = httpx.Request(
+        "GET",
+        "https://api.geoapify.com/v2/places",
+    )
+
+    client.get.side_effect = error_type(
+        "Connection failed",
+        request=request,
+    )
 
     with pytest.raises(ExternalServiceError, match="unavailable"):
         await POIService().get_pois(48.8566, 2.3522)

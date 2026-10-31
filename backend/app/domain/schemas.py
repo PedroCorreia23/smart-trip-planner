@@ -58,7 +58,7 @@ class TripSearchResponse(BaseModel):
 
 
 class POIInfo(BaseModel):
-    id: int
+    id: str
     name: str
     category: str
     lat: float
