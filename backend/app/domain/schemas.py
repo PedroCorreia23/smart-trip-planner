@@ -63,3 +63,4 @@ class POIInfo(BaseModel):
     category: str
     lat: float
     lon: float
+    image_url: str | None = None
