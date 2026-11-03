@@ -39,7 +39,11 @@ class POIImageService:
             if not images:
                 return None
 
-            return images[0]["mainsnak"]["datavalue"]["value"]
+            mainsnak = images[0].get("mainsnak", {})
+
+            datavalue = mainsnak.get("datavalue", {})
+
+            return datavalue.get("value")
 
         except httpx.HTTPStatusError as exc:
             logger.error(
