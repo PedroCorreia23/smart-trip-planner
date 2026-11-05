@@ -64,3 +64,11 @@ class POIInfo(BaseModel):
     lat: float
     lon: float
     image_url: str | None = None
+
+
+class POIImageInfo(BaseModel):
+    url: str
+    thumbnail_url: str | None = None
+    author: str | None = None
+    license: str | None = None
+    description_url: str | None = None
