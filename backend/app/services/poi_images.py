@@ -3,8 +3,8 @@ import logging
 import httpx
 
 from app.config import settings
-from app.exceptions import ExternalServiceError
 from app.domain.schemas import POIImageInfo
+from app.exceptions import ExternalServiceError
 
 logger = logging.getLogger(__name__)
 
