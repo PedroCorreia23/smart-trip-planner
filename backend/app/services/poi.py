@@ -101,9 +101,7 @@ class POIService:
                 "Geoapify Place Details returned HTTP error: status=%s",
                 exc.response.status_code,
             )
-            raise ExternalServiceError(
-                "Geoapify Place Details returned an HTTP error."
-            ) from exc
+            raise ExternalServiceError("Geoapify Place Details returned an HTTP error.") from exc
 
         except httpx.RequestError as exc:
             logger.error(
@@ -111,6 +109,4 @@ class POIService:
                 type(exc).__name__,
                 exc,
             )
-            raise ExternalServiceError(
-                "Geoapify Place Details service is unavailable."
-            ) from exc
+            raise ExternalServiceError("Geoapify Place Details service is unavailable.") from exc

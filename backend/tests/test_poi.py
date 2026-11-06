@@ -25,6 +25,26 @@ def mock_geoapify():
         yield client, response
 
 
+@pytest.fixture
+def mock_place_details():
+    """Mock the Geoapify Place Details API."""
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {"features": []}
+
+    client = AsyncMock()
+    client.get.return_value = response
+
+    context_manager = AsyncMock()
+    context_manager.__aenter__.return_value = client
+
+    with patch(
+        "app.services.poi.httpx.AsyncClient",
+        return_value=context_manager,
+    ):
+        yield client, response
+
+
 @pytest.mark.asyncio
 async def test_get_pois_success(mock_geoapify):
     client, response = mock_geoapify
@@ -185,3 +205,103 @@ async def test_get_pois_request_error(mock_geoapify, error_type):
 
     with pytest.raises(ExternalServiceError, match="unavailable"):
         await POIService().get_pois(48.8566, 2.3522)
+
+
+@pytest.mark.asyncio
+async def test_get_wikidata_id_success(mock_place_details):
+    client, response = mock_place_details
+
+    response.json.return_value = {
+        "features": [
+            {
+                "properties": {
+                    "feature_type": "details",
+                    "name": "Musée Banksy",
+                    "wiki_and_media": {
+                        "wikidata": "Q126281470",
+                    },
+                }
+            }
+        ]
+    }
+
+    wikidata_id = await POIService().get_wikidata_id("example-place-id")
+
+    assert wikidata_id == "Q126281470"
+    client.get.assert_awaited_once()
+
+    params = client.get.await_args.kwargs["params"]
+    assert params["id"] == "example-place-id"
+
+
+@pytest.mark.asyncio
+async def test_get_wikidata_id_no_wiki_data(mock_place_details):
+    _, response = mock_place_details
+
+    response.json.return_value = {
+        "features": [
+            {
+                "properties": {
+                    "feature_type": "details",
+                    "name": "Example Museum",
+                }
+            }
+        ]
+    }
+
+    wikidata_id = await POIService().get_wikidata_id("example-place-id")
+
+    assert wikidata_id is None
+
+
+@pytest.mark.asyncio
+async def test_get_wikidata_id_empty_features(mock_place_details):
+    _, response = mock_place_details
+
+    response.json.return_value = {"features": []}
+
+    wikidata_id = await POIService().get_wikidata_id("example-place-id")
+
+    assert wikidata_id is None
+
+
+@pytest.mark.asyncio
+async def test_get_wikidata_id_http_error(mock_place_details):
+    _, response = mock_place_details
+
+    request = httpx.Request(
+        "GET",
+        "https://api.geoapify.com/v2/place-details",
+    )
+    error_response = httpx.Response(503, request=request)
+
+    response.raise_for_status.side_effect = httpx.HTTPStatusError(
+        "Service Unavailable",
+        request=request,
+        response=error_response,
+    )
+
+    with pytest.raises(ExternalServiceError, match="HTTP error"):
+        await POIService().get_wikidata_id("example-place-id")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "error_type",
+    [httpx.ConnectError, httpx.ReadTimeout],
+)
+async def test_get_wikidata_id_request_error(mock_place_details, error_type):
+    client, _ = mock_place_details
+
+    request = httpx.Request(
+        "GET",
+        "https://api.geoapify.com/v2/place-details",
+    )
+
+    client.get.side_effect = error_type(
+        "Connection failed",
+        request=request,
+    )
+
+    with pytest.raises(ExternalServiceError, match="unavailable"):
+        await POIService().get_wikidata_id("example-place-id")
