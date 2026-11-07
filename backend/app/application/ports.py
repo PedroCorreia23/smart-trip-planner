@@ -5,6 +5,7 @@ from app.domain.schemas import (
     Coordinates,
     CurrencyInfo,
     ExchangeRateInfo,
+    POIImageInfo,
     POIInfo,
     WeatherInfo,
 )
@@ -32,3 +33,11 @@ class ExchangeRatePort(Protocol):
 
 class POIPort(Protocol):
     async def get_pois(self, lat: float, lon: float, radius: int = 5000) -> list[POIInfo]: ...
+
+    async def get_wikidata_id(self, place_id: str) -> str | None: ...
+
+
+class POIImagePort(Protocol):
+    async def get_image(self, wikidata_id: str) -> str | None: ...
+
+    async def get_commons_image(self, filename: str) -> POIImageInfo | None: ...
