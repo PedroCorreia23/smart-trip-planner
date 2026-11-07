@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     GEOAPIFY_API_KEY: str
 
     HTTP_TIMEOUT: float = 5.0
-    USER_AGENT: str = "SmartTripPlanner/0.1"
+    USER_AGENT: str = "SmartTripPlanner/0.1 (https://github.com/PedroCorreia23/smart-trip-planner)"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
