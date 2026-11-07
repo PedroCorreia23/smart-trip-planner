@@ -17,7 +17,17 @@ class POISearchUseCase:
         self.poi_image_service = poi_image_service
 
     async def execute(self, lat: float, lon: float, radius: int = 5000) -> list[POIInfo]:
-        return await self.poi_service.get_pois(lat, lon, radius)
+        pois = await self.poi_service.get_pois(lat, lon, radius)
+
+        enriched_pois = []
+
+        for poi in pois[:5]:
+            enriched_poi = await self.enrich_poi(poi)
+            enriched_pois.append(enriched_poi)
+
+        enriched_pois.extend(pois[5:])
+
+        return enriched_pois
 
     async def enrich_poi(self, poi: POIInfo) -> POIInfo:
         try:
