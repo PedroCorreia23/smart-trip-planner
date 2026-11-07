@@ -1,10 +1,11 @@
 import logging
 
-from app.application.ports import POIPort, POIImagePort
+from app.application.ports import POIImagePort, POIPort
 from app.domain.schemas import POIInfo
 from app.exceptions import ExternalServiceError
 
 logger = logging.getLogger(__name__)
+
 
 class POISearchUseCase:
     def __init__(
@@ -35,9 +36,7 @@ class POISearchUseCase:
             if not image:
                 return poi
 
-            return poi.model_copy(
-                update={"image_url": image.thumbnail_url or image.url}
-            )
+            return poi.model_copy(update={"image_url": image.thumbnail_url or image.url})
 
         except ExternalServiceError as exc:
             logger.warning(
