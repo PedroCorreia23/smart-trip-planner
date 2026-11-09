@@ -1,6 +1,6 @@
 export default function POIResults({ pois }) {
   return (
-    <section className="poi-results">
+    <section className="poi-results" aria-labelledby="poi-heading">
       <h2>Discover Places to Visit</h2>
 
       {pois.length === 0 ? (
