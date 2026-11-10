@@ -176,6 +176,10 @@ def test_search_pois_success():
                 "category": "entertainment.museum",
                 "lat": 48.8566,
                 "lon": 2.3522,
+                "image_url": None,
+                "image_author": None,
+                "image_license": None,
+                "image_source_url": None,
             }
         ]
 

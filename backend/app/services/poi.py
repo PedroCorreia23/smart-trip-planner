@@ -68,3 +68,45 @@ class POIService:
                 exc,
             )
             raise ExternalServiceError("POI service is unavailable.") from exc
+
+    async def get_wikidata_id(self, place_id: str) -> str | None:
+        url = f"{settings.GEOAPIFY_BASE_URL}/place-details"
+        params = {
+            "id": place_id,
+            "apiKey": settings.GEOAPIFY_API_KEY,
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
+                response = await client.get(url, params=params)
+                response.raise_for_status()
+                data = response.json()
+
+            for feature in data.get("features", []):
+                properties = feature.get("properties", {})
+
+                if properties.get("feature_type") != "details":
+                    continue
+
+                wiki_data = properties.get("wiki_and_media") or {}
+                wikidata = wiki_data.get("wikidata")
+
+                if wikidata:
+                    return wikidata
+
+            return None
+
+        except httpx.HTTPStatusError as exc:
+            logger.error(
+                "Geoapify Place Details returned HTTP error: status=%s",
+                exc.response.status_code,
+            )
+            raise ExternalServiceError("Geoapify Place Details returned an HTTP error.") from exc
+
+        except httpx.RequestError as exc:
+            logger.error(
+                "Geoapify Place Details request failed: type=%s error=%r",
+                type(exc).__name__,
+                exc,
+            )
+            raise ExternalServiceError("Geoapify Place Details service is unavailable.") from exc
