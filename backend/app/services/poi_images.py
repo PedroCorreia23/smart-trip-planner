@@ -1,4 +1,6 @@
 import logging
+from html import unescape
+from html.parser import HTMLParser
 
 import httpx
 
@@ -7,6 +9,28 @@ from app.domain.schemas import POIImageInfo
 from app.exceptions import ExternalServiceError
 
 logger = logging.getLogger(__name__)
+
+
+class HTMLTextExtractor(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+    def get_text(self) -> str:
+        return "".join(self.parts).strip()
+
+
+def clean_html_text(value: str | None) -> str | None:
+    if not value:
+        return None
+
+    parser = HTMLTextExtractor()
+    parser.feed(unescape(value))
+
+    return parser.get_text() or None
 
 
 class POIImageService:
@@ -103,7 +127,7 @@ class POIImageService:
 
                 metadata = info.get("extmetadata", {})
 
-                author = metadata.get("Artist", {}).get("value")
+                author = clean_html_text(metadata.get("Artist", {}).get("value"))
                 license_name = metadata.get("LicenseShortName", {}).get("value")
 
                 return POIImageInfo(

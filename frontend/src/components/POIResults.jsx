@@ -22,6 +22,27 @@ export default function POIResults({ pois }) {
 
               <h3>{poi.name}</h3>
               <p>{poi.category}</p>
+              {poi.image_url && (
+                <div className="poi-attribution">
+                  {poi.image_author && (
+                    <p>Photo: {poi.image_author}</p>
+                  )}
+
+                  {poi.image_license && (
+                    <p>License: {poi.image_license}</p>
+                  )}
+
+                  {poi.image_source_url && (
+                    <a
+                      href={poi.image_source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View original on Wikimedia Commons
+                    </a>
+                  )}
+                </div>
+            )}
             </div>
           ))}
         </div>

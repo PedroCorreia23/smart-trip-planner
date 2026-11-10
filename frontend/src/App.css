@@ -296,3 +296,24 @@
     grid-template-columns: 1fr;
   }
 }
+
+.poi-attribution {
+  padding: 8px 12px 12px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.poi-attribution p {
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+
+.poi-attribution a {
+  color: #2563eb;
+  overflow-wrap: anywhere;
+}
+
+.poi-attribution a:hover {
+  text-decoration: underline;
+} 

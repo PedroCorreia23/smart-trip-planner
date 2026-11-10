@@ -5,7 +5,7 @@ import pytest
 
 from app.domain.schemas import POIImageInfo
 from app.exceptions import ExternalServiceError
-from app.services.poi_images import POIImageService
+from app.services.poi_images import POIImageService, clean_html_text
 
 
 @pytest.fixture
@@ -280,3 +280,11 @@ async def test_get_commons_image_request_error(mock_commons, error_type):
 
     with pytest.raises(ExternalServiceError, match="unavailable"):
         await POIImageService().get_commons_image("Louvre.jpg")
+
+
+def test_clean_html_text():
+    html = '<a href="/wiki/User:Example">Example Author</a>'
+
+    result = clean_html_text(html)
+
+    assert result == "Example Author"
