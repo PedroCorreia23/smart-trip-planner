@@ -46,7 +46,14 @@ class POISearchUseCase:
             if not image:
                 return poi
 
-            return poi.model_copy(update={"image_url": image.thumbnail_url or image.url})
+            return poi.model_copy(
+                update={
+                    "image_url": image.thumbnail_url or image.url,
+                    "image_author": image.author,
+                    "image_license": image.license,
+                    "image_source_url": image.description_url,
+                }
+            )
 
         except ExternalServiceError as exc:
             logger.warning(
