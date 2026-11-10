@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
-import pytest 
+import pytest
 
 from app.domain.schemas import POIImageInfo
 from app.exceptions import ExternalServiceError
