@@ -34,6 +34,9 @@ def clean_html_text(value: str | None) -> str | None:
 
 
 class POIImageService:
+    def __init__(self, client: httpx.AsyncClient):
+        self.client = client
+
     async def get_image(self, wikidata_id: str) -> str | None:
         url = "https://www.wikidata.org/w/api.php"
 
@@ -49,14 +52,13 @@ class POIImageService:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
-                response = await client.get(
-                    url,
-                    params=params,
-                    headers=headers,
-                )
-                response.raise_for_status()
-                data = response.json()
+            response = await self.client.get(
+                url,
+                params=params,
+                headers=headers,
+            )
+            response.raise_for_status()
+            data = response.json()
 
             entity = data.get("entities", {}).get(wikidata_id, {})
             images = entity.get("claims", {}).get("P18", [])
@@ -98,14 +100,13 @@ class POIImageService:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
-                response = await client.get(
-                    url,
-                    params=params,
-                    headers=headers,
-                )
-                response.raise_for_status()
-                data = response.json()
+            response = await self.client.get(
+                url,
+                params=params,
+                headers=headers,
+            )
+            response.raise_for_status()
+            data = response.json()
 
             pages = data.get("query", {}).get("pages", {})
 

@@ -1,3 +1,5 @@
+from fastapi import Request
+
 from app.application.poi_search import POISearchUseCase
 from app.application.trip_search import TripSearchUseCase
 from app.services.currency import CurrencyService
@@ -17,8 +19,11 @@ def get_trip_search_use_case() -> TripSearchUseCase:
     )
 
 
-def get_poi_search_use_case() -> POISearchUseCase:
+def get_poi_search_use_case(request: Request) -> POISearchUseCase:
+
+    client = request.app.state.http_client
+
     return POISearchUseCase(
         poi_service=POIService(),
-        poi_image_service=POIImageService(),
+        poi_image_service=POIImageService(client),
     )
