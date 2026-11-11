@@ -1,11 +1,14 @@
 import logging
+from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import Depends, FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.application.poi_search import POISearchUseCase
 from app.application.trip_search import TripSearchUseCase
+from app.config import settings
 from app.dependencies import get_poi_search_use_case, get_trip_search_use_case
 from app.domain.schemas import POIInfo, TripQuery, TripSearchResponse
 from app.exceptions import (
@@ -19,7 +22,16 @@ configure_logging()
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
+        app.state.http_client = client
+        yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 # Configuração do CORS
 app.add_middleware(

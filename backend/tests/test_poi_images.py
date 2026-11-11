@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
@@ -15,17 +15,10 @@ def mock_wikidata():
     response.raise_for_status.return_value = None
     response.json.return_value = {"entities": {}}
 
-    client = AsyncMock()
+    client = AsyncMock(spec=httpx.AsyncClient)
     client.get.return_value = response
 
-    context_manager = AsyncMock()
-    context_manager.__aenter__.return_value = client
-
-    with patch(
-        "app.services.poi_images.httpx.AsyncClient",
-        return_value=context_manager,
-    ):
-        yield client, response
+    return client, response
 
 
 @pytest.mark.asyncio
@@ -48,7 +41,8 @@ async def test_get_image_success(mock_wikidata):
         }
     }
 
-    image = await POIImageService().get_image("Q19675")
+    service = POIImageService(client)
+    image = await service.get_image("Q19675")
 
     assert image == "Cour Napoleon at night - Louvre.jpg"
     client.get.assert_awaited_once()
@@ -56,29 +50,31 @@ async def test_get_image_success(mock_wikidata):
 
 @pytest.mark.asyncio
 async def test_get_image_no_p18(mock_wikidata):
-    _, response = mock_wikidata
+    client, response = mock_wikidata
 
     response.json.return_value = {"entities": {"Q126281470": {"claims": {}}}}
 
-    image = await POIImageService().get_image("Q126281470")
+    service = POIImageService(client)
+    image = await service.get_image("Q126281470")
 
     assert image is None
 
 
 @pytest.mark.asyncio
 async def test_get_image_incomplete_p18(mock_wikidata):
-    _, response = mock_wikidata
+    client, response = mock_wikidata
 
     response.json.return_value = {"entities": {"Q19675": {"claims": {"P18": [{"mainsnak": {}}]}}}}
 
-    image = await POIImageService().get_image("Q19675")
+    service = POIImageService(client)
+    image = await service.get_image("Q19675")
 
     assert image is None
 
 
 @pytest.mark.asyncio
 async def test_get_image_http_error(mock_wikidata):
-    _, response = mock_wikidata
+    client, response = mock_wikidata
 
     request = httpx.Request("GET", "https://www.wikidata.org/w/api.php")
     error_response = httpx.Response(503, request=request)
@@ -90,7 +86,7 @@ async def test_get_image_http_error(mock_wikidata):
     )
 
     with pytest.raises(ExternalServiceError, match="HTTP error"):
-        await POIImageService().get_image("Q19675")
+        await POIImageService(client).get_image("Q19675")
 
 
 @pytest.mark.asyncio
@@ -109,7 +105,7 @@ async def test_get_image_request_error(mock_wikidata, error_type):
     )
 
     with pytest.raises(ExternalServiceError, match="unavailable"):
-        await POIImageService().get_image("Q19675")
+        await POIImageService(client).get_image("Q19675")
 
 
 @pytest.fixture
@@ -119,17 +115,10 @@ def mock_commons():
     response.raise_for_status.return_value = None
     response.json.return_value = {"query": {"pages": {}}}
 
-    client = AsyncMock()
+    client = AsyncMock(spec=httpx.AsyncClient)
     client.get.return_value = response
 
-    context_manager = AsyncMock()
-    context_manager.__aenter__.return_value = client
-
-    with patch(
-        "app.services.poi_images.httpx.AsyncClient",
-        return_value=context_manager,
-    ):
-        yield client, response
+    return client, response
 
 
 @pytest.mark.asyncio
@@ -156,7 +145,8 @@ async def test_get_commons_image_success(mock_commons):
         }
     }
 
-    image = await POIImageService().get_commons_image("Louvre.jpg")
+    service = POIImageService(client)
+    image = await service.get_commons_image("Louvre.jpg")
 
     assert isinstance(image, POIImageInfo)
     assert image.url == "https://example.com/louvre.jpg"
@@ -170,7 +160,7 @@ async def test_get_commons_image_success(mock_commons):
 
 @pytest.mark.asyncio
 async def test_get_commons_image_not_found(mock_commons):
-    _, response = mock_commons
+    client, response = mock_commons
 
     response.json.return_value = {
         "query": {
@@ -183,14 +173,14 @@ async def test_get_commons_image_not_found(mock_commons):
         }
     }
 
-    image = await POIImageService().get_commons_image("Unknown.jpg")
+    image = await POIImageService(client).get_commons_image("Unknown.jpg")
 
     assert image is None
 
 
 @pytest.mark.asyncio
 async def test_get_commons_image_missing_url(mock_commons):
-    _, response = mock_commons
+    client, response = mock_commons
 
     response.json.return_value = {
         "query": {
@@ -207,14 +197,14 @@ async def test_get_commons_image_missing_url(mock_commons):
         }
     }
 
-    image = await POIImageService().get_commons_image("Example.jpg")
+    image = await POIImageService(client).get_commons_image("Example.jpg")
 
     assert image is None
 
 
 @pytest.mark.asyncio
 async def test_get_commons_image_missing_metadata(mock_commons):
-    _, response = mock_commons
+    client, response = mock_commons
 
     response.json.return_value = {
         "query": {
@@ -230,7 +220,7 @@ async def test_get_commons_image_missing_metadata(mock_commons):
         }
     }
 
-    image = await POIImageService().get_commons_image("Example.jpg")
+    image = await POIImageService(client).get_commons_image("Example.jpg")
 
     assert isinstance(image, POIImageInfo)
     assert image.url == "https://example.com/image.jpg"
@@ -242,7 +232,7 @@ async def test_get_commons_image_missing_metadata(mock_commons):
 
 @pytest.mark.asyncio
 async def test_get_commons_image_http_error(mock_commons):
-    _, response = mock_commons
+    client, response = mock_commons
 
     request = httpx.Request(
         "GET",
@@ -257,7 +247,7 @@ async def test_get_commons_image_http_error(mock_commons):
     )
 
     with pytest.raises(ExternalServiceError, match="HTTP error"):
-        await POIImageService().get_commons_image("Louvre.jpg")
+        await POIImageService(client).get_commons_image("Louvre.jpg")
 
 
 @pytest.mark.asyncio
@@ -279,7 +269,7 @@ async def test_get_commons_image_request_error(mock_commons, error_type):
     )
 
     with pytest.raises(ExternalServiceError, match="unavailable"):
-        await POIImageService().get_commons_image("Louvre.jpg")
+        await POIImageService(client).get_commons_image("Louvre.jpg")
 
 
 def test_clean_html_text():

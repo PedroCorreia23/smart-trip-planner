@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock
 
 import pytest
+from fastapi import Request
 from fastapi.testclient import TestClient
 
 from app.dependencies import get_poi_search_use_case, get_trip_search_use_case
@@ -12,7 +13,11 @@ from app.exceptions import (
 )
 from app.main import app
 
-client = TestClient(app)
+
+@pytest.fixture
+def client():
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 @pytest.fixture(autouse=True)
@@ -21,14 +26,14 @@ def clear_dependency_overrides():
     app.dependency_overrides.clear()
 
 
-def test_read_main():
+def test_read_main(client):
     response = client.get("/health")
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
 
-def test_search_trip_valid():
+def test_search_trip_valid(client):
 
     payload = {
         "origin": "Lisboa",
@@ -72,7 +77,7 @@ def test_search_trip_valid():
     fake_use_case.execute.assert_awaited_once()
 
 
-def test_search_trip_invalid_dates():
+def test_search_trip_invalid_dates(client):
 
     payload = {
         "origin": "Lisboa",
@@ -86,7 +91,7 @@ def test_search_trip_invalid_dates():
     assert response.status_code == 422
 
 
-def test_search_trip_external_service_error():
+def test_search_trip_external_service_error(client):
     payload = {
         "origin": "Lisboa",
         "destination": "New York",
@@ -106,7 +111,7 @@ def test_search_trip_external_service_error():
     assert response.json() == {"detail": "An external service is currently unavailable."}
 
 
-def test_search_trip_location_not_found():
+def test_search_trip_location_not_found(client):
 
     payload = {
         "origin": "CidadeInexistente",
@@ -126,7 +131,7 @@ def test_search_trip_location_not_found():
     assert response.json() == {"detail": "Origin city not found."}
 
 
-def test_search_trip_currency_unavailable():
+def test_search_trip_currency_unavailable(client):
 
     payload = {
         "origin": "Lisboa",
@@ -148,7 +153,7 @@ def test_search_trip_currency_unavailable():
     assert response.json() == {"detail": "Could not retrieve destination currency."}
 
 
-def test_search_pois_success():
+def test_search_pois_success(client):
     fake_use_case = AsyncMock()
     fake_use_case.execute.return_value = [
         POIInfo(
@@ -187,7 +192,7 @@ def test_search_pois_success():
         app.dependency_overrides.pop(get_poi_search_use_case, None)
 
 
-def test_search_pois_empty():
+def test_search_pois_empty(client):
 
     fake_use_case = AsyncMock()
     fake_use_case.execute.return_value = []
@@ -221,7 +226,7 @@ def test_search_pois_empty():
         {"lat": 48.8566},
     ],
 )
-def test_search_pois_invalid_params(params):
+def test_search_pois_invalid_params(params, client):
     fake_use_case = AsyncMock()
 
     app.dependency_overrides[get_poi_search_use_case] = lambda: fake_use_case
@@ -238,7 +243,7 @@ def test_search_pois_invalid_params(params):
         app.dependency_overrides.pop(get_poi_search_use_case, None)
 
 
-def test_search_pois_external_service_error():
+def test_search_pois_external_service_error(client):
     fake_use_case = AsyncMock()
 
     fake_use_case.execute.side_effect = ExternalServiceError("POI service is unavailable.")
@@ -259,3 +264,21 @@ def test_search_pois_external_service_error():
 
     finally:
         app.dependency_overrides.pop(get_poi_search_use_case, None)
+
+
+def test_http_client_lifespan():
+    with TestClient(app):
+        http_client = app.state.http_client
+
+        assert http_client is not None
+        assert http_client.is_closed is False
+
+    assert http_client.is_closed is True
+
+
+def test_poi_service_uses_shared_http_client(client):
+    request = Request({"type": "http", "app": app})
+
+    use_case = get_poi_search_use_case(request)
+
+    assert use_case.poi_image_service.client is app.state.http_client
