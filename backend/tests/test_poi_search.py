@@ -1,4 +1,5 @@
-from unittest.mock import AsyncMock
+import asyncio
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -128,3 +129,94 @@ async def test_enrich_poi_fallback_to_original_url(mock_services):
     result = await use_case.enrich_poi(poi)
 
     assert result.image_url == "https://example.com/louvre.jpg"
+
+
+@pytest.mark.asyncio
+async def test_execute_preserves_poi_order(mock_services):
+    use_case, poi_service, _, poi = mock_services
+
+    pois = [poi.model_copy(update={"id": f"poi-{i}"}) for i in range(1, 4)]
+
+    poi_service.get_pois.return_value = pois
+
+    async def mock_enrich(poi):
+        delays = {
+            "poi-1": 0.03,
+            "poi-2": 0.02,
+            "poi-3": 0.01,
+        }
+
+        await asyncio.sleep(delays[poi.id])
+        return poi
+
+    with patch.object(use_case, "enrich_poi", side_effect=mock_enrich):
+        result = await use_case.execute(48.8566, 2.3522)
+
+    assert [poi.id for poi in result] == [
+        "poi-1",
+        "poi-2",
+        "poi-3",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_execute_respects_concurrency_limit(mock_services):
+    use_case, poi_service, _, poi = mock_services
+
+    pois = [poi.model_copy(update={"id": f"poi-{i}"}) for i in range(1, 6)]
+
+    poi_service.get_pois.return_value = pois
+
+    active_tasks = 0
+    max_active_tasks = 0
+
+    async def mock_enrich(poi):
+        nonlocal active_tasks, max_active_tasks
+
+        active_tasks += 1
+        max_active_tasks = max(max_active_tasks, active_tasks)
+
+        try:
+            await asyncio.sleep(0.02)
+            return poi
+        finally:
+            active_tasks -= 1
+
+    with patch.object(use_case, "enrich_poi", side_effect=mock_enrich):
+        result = await use_case.execute(48.8566, 2.3522)
+
+    assert len(result) == 5
+    assert max_active_tasks == 3
+    assert active_tasks == 0
+
+
+@pytest.mark.asyncio
+async def test_execute_enriches_only_first_five(mock_services):
+    use_case, poi_service, _, poi = mock_services
+
+    pois = [poi.model_copy(update={"id": f"poi-{i}"}) for i in range(1, 9)]
+
+    poi_service.get_pois.return_value = pois
+
+    with patch.object(
+        use_case,
+        "enrich_poi",
+        new_callable=AsyncMock,
+        side_effect=lambda poi: poi,
+    ) as mock_enrich:
+        result = await use_case.execute(48.8566, 2.3522)
+
+    assert len(result) == 8
+    assert mock_enrich.await_count == 5
+
+    enriched_ids = [call.args[0].id for call in mock_enrich.await_args_list]
+
+    assert enriched_ids == [
+        "poi-1",
+        "poi-2",
+        "poi-3",
+        "poi-4",
+        "poi-5",
+    ]
+
+    assert result[5:] == pois[5:]

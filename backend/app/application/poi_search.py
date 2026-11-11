@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from app.application.ports import POIImagePort, POIPort
@@ -19,15 +20,19 @@ class POISearchUseCase:
     async def execute(self, lat: float, lon: float, radius: int = 5000) -> list[POIInfo]:
         pois = await self.poi_service.get_pois(lat, lon, radius)
 
-        enriched_pois = []
+        semaphore = asyncio.Semaphore(3)
 
-        for poi in pois[:5]:
-            enriched_poi = await self.enrich_poi(poi)
-            enriched_pois.append(enriched_poi)
+        enriched_pois = await asyncio.gather(
+            *(self.enrich_poi_limited(poi, semaphore) for poi in pois[:5])
+        )
 
         enriched_pois.extend(pois[5:])
 
         return enriched_pois
+
+    async def enrich_poi_limited(self, poi: POIInfo, semaphore: asyncio.Semaphore) -> POIInfo:
+        async with semaphore:
+            return await self.enrich_poi(poi)
 
     async def enrich_poi(self, poi: POIInfo) -> POIInfo:
         try:
