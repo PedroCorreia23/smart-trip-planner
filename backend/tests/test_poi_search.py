@@ -242,3 +242,51 @@ async def test_execute_enriches_only_first_five(mock_services):
             5000,
             category="park",
         )
+
+
+@pytest.mark.asyncio
+async def test_enrich_poi_skips_details_when_wikidata_exists(mock_services):
+    use_case, poi_service, poi_image_service, _ = mock_services
+
+    poi = POIInfo(
+        id="123",
+        name="Eiffel Tower",
+        category="tourism.sights",
+        lat=48.8584,
+        lon=2.2945,
+        wikidata_id="Q243",
+    )
+
+    poi_image_service.get_image.return_value = None
+
+    result = await use_case.enrich_poi(poi)
+
+    poi_service.get_wikidata_id.assert_not_awaited()
+
+    poi_image_service.get_image.assert_awaited_once_with("Q243")
+
+    assert result == poi
+
+
+@pytest.mark.asyncio
+async def test_enrich_poi_uses_fallback_when_wikidata_missing(mock_services):
+    use_case, poi_service, poi_image_service, _ = mock_services
+
+    poi = POIInfo(
+        id="123",
+        name="Example Museum",
+        category="entertainment.museum",
+        lat=48.8566,
+        lon=2.3522,
+        wikidata_id=None,
+    )
+
+    poi_service.get_wikidata_id.return_value = "Q12345"
+    poi_image_service.get_image.return_value = None
+
+    result = await use_case.enrich_poi(poi)
+
+    poi_service.get_wikidata_id.assert_awaited_once_with("123")
+    poi_image_service.get_image.assert_awaited_once_with("Q12345")
+
+    assert result == poi
