@@ -193,11 +193,11 @@ def test_search_pois_success(client):
 
 
 def test_search_pois_empty(client):
-
     fake_use_case = AsyncMock()
     fake_use_case.execute.return_value = []
 
     app.dependency_overrides[get_poi_search_use_case] = lambda: fake_use_case
+
     try:
         response = client.get(
             "/pois",
@@ -207,7 +207,7 @@ def test_search_pois_empty(client):
         assert response.status_code == 200
         assert response.json() == []
 
-        fake_use_case.execute.assert_awaited_once_with(48.8566, 2.3522, 1000)
+        fake_use_case.execute.assert_awaited_once_with(48.8566, 2.3522, 1000, category="museum")
 
     finally:
         app.dependency_overrides.pop(get_poi_search_use_case, None)
@@ -260,7 +260,7 @@ def test_search_pois_external_service_error(client):
 
         assert response.json() == {"detail": "An external service is currently unavailable."}
 
-        fake_use_case.execute.assert_awaited_once_with(48.8566, 2.3522, 5000)
+        fake_use_case.execute.assert_awaited_once_with(48.8566, 2.3522, 5000, category="museum")
 
     finally:
         app.dependency_overrides.pop(get_poi_search_use_case, None)
@@ -282,3 +282,130 @@ def test_poi_service_uses_shared_http_client(client):
     use_case = get_poi_search_use_case(request)
 
     assert use_case.poi_image_service.client is app.state.http_client
+
+
+@pytest.mark.parametrize(
+    "category",
+    ["museum", "monument", "park", "attraction"],
+)
+def test_search_pois_valid_category(client, category):
+    fake_use_case = AsyncMock()
+    fake_use_case.execute.return_value = []
+
+    app.dependency_overrides[get_poi_search_use_case] = lambda: fake_use_case
+
+    response = client.get(
+        "/pois",
+        params={
+            "lat": 48.8566,
+            "lon": 2.3522,
+            "category": category,
+        },
+    )
+
+    assert response.status_code == 200
+
+    fake_use_case.execute.assert_awaited_once_with(
+        48.8566,
+        2.3522,
+        5000,
+        category=category,
+    )
+
+
+def test_search_pois_invalid_category(client):
+    fake_use_case = AsyncMock()
+
+    app.dependency_overrides[get_poi_search_use_case] = lambda: fake_use_case
+
+    response = client.get(
+        "/pois",
+        params={
+            "lat": 48.8566,
+            "lon": 2.3522,
+            "category": "invalid_category",
+        },
+    )
+
+    assert response.status_code == 422
+    assert "detail" in response.json()
+
+    fake_use_case.execute.assert_not_awaited()
+
+
+def test_pois_valid_category(client):
+    mock_use_case = AsyncMock()
+    mock_use_case.execute.return_value = []
+
+    app.dependency_overrides[get_poi_search_use_case] = lambda: mock_use_case
+
+    try:
+        response = client.get(
+            "/pois",
+            params={
+                "lat": 48.8566,
+                "lon": 2.3522,
+                "category": "park",
+            },
+        )
+
+        assert response.status_code == 200
+
+        mock_use_case.execute.assert_awaited_once_with(
+            48.8566,
+            2.3522,
+            5000,
+            category="park",
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_pois_invalid_category(client):
+    mock_use_case = AsyncMock()
+    mock_use_case.execute.return_value = []
+
+    app.dependency_overrides[get_poi_search_use_case] = lambda: mock_use_case
+
+    try:
+        response = client.get(
+            "/pois",
+            params={
+                "lat": 48.8566,
+                "lon": 2.3522,
+                "category": "restaurant",
+            },
+        )
+
+        assert response.status_code == 422
+
+        mock_use_case.execute.assert_not_awaited()
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_pois_default_category(client):
+    mock_use_case = AsyncMock()
+    mock_use_case.execute.return_value = []
+
+    app.dependency_overrides[get_poi_search_use_case] = lambda: mock_use_case
+
+    try:
+        response = client.get(
+            "/pois",
+            params={
+                "lat": 48.8566,
+                "lon": 2.3522,
+            },
+        )
+
+        assert response.status_code == 200
+
+        mock_use_case.execute.assert_awaited_once_with(
+            48.8566,
+            2.3522,
+            5000,
+            category="museum",
+        )
+    finally:
+        app.dependency_overrides.clear()

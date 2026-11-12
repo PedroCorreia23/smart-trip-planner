@@ -17,7 +17,9 @@ POI_CATEGORIES = {
 
 
 class POIService:
-    async def get_pois(self, lat: float, lon: float, radius: int = 5000, category: str = "museum") -> list[POIInfo]:
+    async def get_pois(
+        self, lat: float, lon: float, radius: int = 5000, category: str = "museum"
+    ) -> list[POIInfo]:
         url = f"{settings.GEOAPIFY_BASE_URL}/places"
         params = {
             "categories": POI_CATEGORIES[category],

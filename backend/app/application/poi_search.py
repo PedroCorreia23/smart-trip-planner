@@ -17,8 +17,10 @@ class POISearchUseCase:
         self.poi_service = poi_service
         self.poi_image_service = poi_image_service
 
-    async def execute(self, lat: float, lon: float, radius: int = 5000) -> list[POIInfo]:
-        pois = await self.poi_service.get_pois(lat, lon, radius)
+    async def execute(
+        self, lat: float, lon: float, radius: int = 5000, category: str = "museum"
+    ) -> list[POIInfo]:
+        pois = await self.poi_service.get_pois(lat, lon, radius, category=category)
 
         semaphore = asyncio.Semaphore(3)
 
