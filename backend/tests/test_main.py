@@ -185,6 +185,7 @@ def test_search_pois_success(client):
                 "image_author": None,
                 "image_license": None,
                 "image_source_url": None,
+                "wikidata_id": None,
             }
         ]
 

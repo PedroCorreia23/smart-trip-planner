@@ -342,3 +342,64 @@ async def test_get_pois_categories(category, expected_geoapify_category):
 
     assert params["categories"] == expected_geoapify_category
     client.get.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_pois_with_wikidata_id():
+    fake_data = {
+        "features": [
+            {
+                "properties": {
+                    "place_id": "123",
+                    "name": "Example Museum",
+                    "lat": 48.8566,
+                    "lon": 2.3522,
+                    "categories": ["entertainment.museum"],
+                    "wiki_and_media": {"wikidata": "Q12345"},
+                }
+            }
+        ]
+    }
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = fake_data
+    mock_response.raise_for_status.return_value = None
+
+    with patch("app.services.poi.httpx.AsyncClient") as mock_client:
+        mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
+
+        service = POIService()
+        pois = await service.get_pois(48.8566, 2.3522)
+
+    assert len(pois) == 1
+    assert pois[0].wikidata_id == "Q12345"
+
+
+@pytest.mark.asyncio
+async def test_get_pois_without_wikidata_id():
+    fake_data = {
+        "features": [
+            {
+                "properties": {
+                    "place_id": "123",
+                    "name": "Example Museum",
+                    "lat": 48.8566,
+                    "lon": 2.3522,
+                    "categories": ["entertainment.museum"],
+                }
+            }
+        ]
+    }
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = fake_data
+    mock_response.raise_for_status.return_value = None
+
+    with patch("app.services.poi.httpx.AsyncClient") as mock_client:
+        mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
+
+        service = POIService()
+        pois = await service.get_pois(48.8566, 2.3522)
+
+    assert len(pois) == 1
+    assert pois[0].wikidata_id is None
