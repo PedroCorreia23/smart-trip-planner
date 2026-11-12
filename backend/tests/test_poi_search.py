@@ -220,3 +220,25 @@ async def test_execute_enriches_only_first_five(mock_services):
     ]
 
     assert result[5:] == pois[5:]
+
+    @pytest.mark.asyncio
+    async def test_execute_passes_category_to_poi_service(mock_services):
+        use_case, poi_service, _, _ = mock_services
+
+        poi_service.get_pois.return_value = []
+
+        result = await use_case.execute(
+            48.8566,
+            2.3522,
+            radius=5000,
+            category="park",
+        )
+
+        assert result == []
+
+        poi_service.get_pois.assert_awaited_once_with(
+            48.8566,
+            2.3522,
+            5000,
+            category="park",
+        )

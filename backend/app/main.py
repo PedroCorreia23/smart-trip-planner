@@ -1,5 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
+from typing import Literal
 
 import httpx
 from fastapi import Depends, FastAPI, Query, Request
@@ -56,17 +57,18 @@ async def health_check():
 @app.get("/pois", response_model=list[POIInfo])
 async def search_pois(
     lat: float = Query(..., ge=-90, le=90, description="Latitude of the destination"),
-    lon: float = Query(..., ge=-180, le=180, description="Longetiude of the destination"),
+    lon: float = Query(..., ge=-180, le=180, description="Longitude of the destination"),
     radius: int = Query(default=5000, ge=100, le=10000),
     use_case: POISearchUseCase = Depends(get_poi_search_use_case),
+    category: Literal["museum", "monument", "park", "attraction"] = "museum",
 ):
     logger.info(
-        "Points of interest requested: lat=%s lon=%s radius=%s",
+        "Points of interest requested: lat=%s lon=%s radius=%s category=%s",
         lat,
         lon,
         radius,
     )
-    return await use_case.execute(lat, lon, radius)
+    return await use_case.execute(lat, lon, radius, category=category)
 
 
 @app.post("/trips/search", response_model=TripSearchResponse)

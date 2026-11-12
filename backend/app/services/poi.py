@@ -8,12 +8,21 @@ from app.exceptions import ExternalServiceError
 
 logger = logging.getLogger(__name__)
 
+POI_CATEGORIES = {
+    "museum": "entertainment.museum",
+    "monument": "tourism.sights",
+    "park": "leisure.park",
+    "attraction": "tourism.attraction",
+}
+
 
 class POIService:
-    async def get_pois(self, lat: float, lon: float, radius: int = 5000) -> list[POIInfo]:
+    async def get_pois(
+        self, lat: float, lon: float, radius: int = 5000, category: str = "museum"
+    ) -> list[POIInfo]:
         url = f"{settings.GEOAPIFY_BASE_URL}/places"
         params = {
-            "categories": "entertainment.museum",
+            "categories": POI_CATEGORIES[category],
             "filter": f"circle:{lon},{lat},{radius}",
             "limit": 20,
             "apiKey": settings.GEOAPIFY_API_KEY,

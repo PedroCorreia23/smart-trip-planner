@@ -32,7 +32,9 @@ class ExchangeRatePort(Protocol):
 
 
 class POIPort(Protocol):
-    async def get_pois(self, lat: float, lon: float, radius: int = 5000) -> list[POIInfo]: ...
+    async def get_pois(
+        self, lat: float, lon: float, radius: int = 5000, category: str = "museum"
+    ) -> list[POIInfo]: ...
 
     async def get_wikidata_id(self, place_id: str) -> str | None: ...
 

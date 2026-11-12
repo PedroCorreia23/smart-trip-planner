@@ -305,3 +305,40 @@ async def test_get_wikidata_id_request_error(mock_place_details, error_type):
 
     with pytest.raises(ExternalServiceError, match="unavailable"):
         await POIService().get_wikidata_id("example-place-id")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "category, expected_geoapify_category",
+    [
+        ("museum", "entertainment.museum"),
+        ("monument", "tourism.sights"),
+        ("park", "leisure.park"),
+        ("attraction", "tourism.attraction"),
+    ],
+)
+async def test_get_pois_categories(category, expected_geoapify_category):
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {"features": []}
+
+    client = AsyncMock()
+    client.get.return_value = response
+
+    context_manager = AsyncMock()
+    context_manager.__aenter__.return_value = client
+
+    with patch(
+        "app.services.poi.httpx.AsyncClient",
+        return_value=context_manager,
+    ):
+        await POIService().get_pois(
+            48.8566,
+            2.3522,
+            category=category,
+        )
+
+    params = client.get.await_args.kwargs["params"]
+
+    assert params["categories"] == expected_geoapify_category
+    client.get.assert_awaited_once()
