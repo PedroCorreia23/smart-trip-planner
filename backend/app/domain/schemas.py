@@ -67,6 +67,7 @@ class POIInfo(BaseModel):
     image_author: str | None = None
     image_license: str | None = None
     image_source_url: str | None = None
+    wikidata_id: str | None = None
 
 
 class POIImageInfo(BaseModel):

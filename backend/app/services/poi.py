@@ -55,12 +55,16 @@ class POIService:
                     categories = properties.get("categories", [])
                     category = categories[0] if categories else "unknown"
 
+                    wiki_data = properties.get("wiki_and_media") or {}
+                    wikidata_id = wiki_data.get("wikidata")
+
                     poi = POIInfo(
                         id=place_id,
                         name=name,
                         category=category,
                         lat=poi_lat,
                         lon=poi_lon,
+                        wikidata_id=wikidata_id,
                     )
 
                     pois.append(poi)
