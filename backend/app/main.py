@@ -67,6 +67,7 @@ async def search_pois(
         lat,
         lon,
         radius,
+        category,
     )
     return await use_case.execute(lat, lon, radius, category=category)
 

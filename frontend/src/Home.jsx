@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import "./App.css"
 import TripSearchForm from "./components/TripSearchForm"
 import TripResults  from "./components/TripResults"
@@ -13,6 +13,10 @@ export default function Home() {
     const [poiLoading, setPoiLoading] = useState(false)
     const [poiError, setPoiError] = useState(null)
 
+    const [poiCategory, setPoiCategory] = useState("museum")
+
+    const poiCache = useRef({})
+
     useEffect(() => {
         if (!tripResult) {
             return
@@ -21,6 +25,16 @@ export default function Home() {
         const lat = tripResult.destination_coordinates.lat
         const lon = tripResult.destination_coordinates.lon
         const controller = new AbortController()
+        const cacheKey = `${lat}:${lon}:5000:${poiCategory}`
+
+        const cachedPOIs = poiCache.current[cacheKey]
+
+        if (cachedPOIs !== undefined) {
+            setPoiResults(cachedPOIs)
+            setPoiLoading(false)
+            setPoiError(null)
+            return
+        }
 
         const fetchPOIs = async () => {
 
@@ -30,7 +44,7 @@ export default function Home() {
                 setPoiError(null)
                 setPoiResults([])
 
-                const url = `${import.meta.env.VITE_API_BASE_URL}/pois?lat=${lat}&lon=${lon}&radius=5000`
+                const url = `${import.meta.env.VITE_API_BASE_URL}/pois?lat=${lat}&lon=${lon}&radius=5000&category=${poiCategory}`
                 const response = await fetch(url, {signal: controller.signal})
                 
                 if (!response.ok) {
@@ -51,6 +65,7 @@ export default function Home() {
                     
                 const data = await response.json()
                 if (!controller.signal.aborted) {
+                    poiCache.current[cacheKey] = data
                     setPoiResults(data)
                 }
 
@@ -72,7 +87,7 @@ export default function Home() {
             controller.abort()
         }
         
-    }, [tripResult])
+    }, [tripResult, poiCategory])
   
     return (
         
@@ -91,13 +106,13 @@ export default function Home() {
                 <>
                     <TripResults tripResult={tripResult} />
 
-                    {poiLoading && <p role="status">Loading places...</p>}
-
-                    {poiError && <p role="alert">{poiError}</p>}
-
-                    {!poiLoading && !poiError && (
-                        <POIResults pois={poiResults} />
-                    )}
+                    <POIResults
+                        pois={poiResults}
+                        category={poiCategory}
+                        onCategoryChange={setPoiCategory}
+                        loading={poiLoading}
+                        error={poiError}
+                    />
                 </>
             )}
         </div>
