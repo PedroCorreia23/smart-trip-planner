@@ -1,3 +1,4 @@
+import asyncio
 from unittest.mock import AsyncMock
 
 import pytest
@@ -139,3 +140,32 @@ def test_invalid_cache_configuration():
 
     with pytest.raises(ValueError):
         CachedPOIService(AsyncMock(), max_entries=0)
+
+
+@pytest.mark.asyncio
+async def test_concurrent_requests_for_same_key():
+    backend = AsyncMock()
+    calls = 0
+
+    async def slow_backend(*args, **kwargs):
+        nonlocal calls
+
+        calls += 1
+        await asyncio.sleep(0.05)
+
+        return [make_poi()]
+
+    backend.get_pois.side_effect = slow_backend
+
+    service = CachedPOIService(backend)
+
+    results = await asyncio.gather(
+        service.get_pois(40.2033, -8.4103),
+        service.get_pois(40.2033, -8.4103),
+    )
+
+    assert len(results) == 2
+    assert all(len(result) == 1 for result in results)
+
+    # Current implementation allows duplicate requests.
+    assert calls == 2

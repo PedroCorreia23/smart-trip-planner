@@ -1,3 +1,4 @@
+import asyncio
 from unittest.mock import AsyncMock
 
 import pytest
@@ -168,3 +169,31 @@ def test_invalid_configuration():
             AsyncMock(),
             max_entries=0,
         )
+
+
+@pytest.mark.asyncio
+async def test_concurrent_image_requests():
+    backend = AsyncMock()
+    calls = 0
+
+    async def slow_backend(*args, **kwargs):
+        nonlocal calls
+
+        calls += 1
+        await asyncio.sleep(0.05)
+
+        return "example.jpg"
+
+    backend.get_image.side_effect = slow_backend
+
+    service = CachedPOIImageService(backend)
+
+    results = await asyncio.gather(
+        service.get_image("Q2351947"),
+        service.get_image("Q2351947"),
+    )
+
+    assert results == ["example.jpg", "example.jpg"]
+
+    # Current implementation allows duplicate requests.
+    assert calls == 2
