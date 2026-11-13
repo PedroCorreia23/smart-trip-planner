@@ -7,11 +7,12 @@ from app.dependencies import get_poi_search_use_case
 from app.services.poi import POIService
 from app.services.poi_cache import CachedPOIService
 from app.services.poi_fallback import FallbackPOIService
+from app.services.poi_image_cache import CachedPOIImageService
 from app.services.poi_images import POIImageService
 from app.services.wikidata_poi import WikidataPOIService
 
 
-def test_poi_dependencies_reuse_shared_service():
+def test_poi_dependencies_reuse_shared_services():
     async def run_test():
         async with httpx.AsyncClient() as client:
             poi_service = FallbackPOIService(
@@ -20,11 +21,14 @@ def test_poi_dependencies_reuse_shared_service():
                 timeout=7.0,
             )
 
+            image_service = CachedPOIImageService(POIImageService(client))
+
             request = SimpleNamespace(
                 app=SimpleNamespace(
                     state=SimpleNamespace(
                         http_client=client,
                         poi_service=poi_service,
+                        poi_image_service=image_service,
                     )
                 )
             )
@@ -34,6 +38,9 @@ def test_poi_dependencies_reuse_shared_service():
 
             assert first.poi_service is poi_service
             assert second.poi_service is poi_service
+
+            assert first.poi_image_service is image_service
+            assert second.poi_image_service is image_service
 
             assert isinstance(
                 first.poi_service,
@@ -57,9 +64,14 @@ def test_poi_dependencies_reuse_shared_service():
 
             assert isinstance(
                 first.poi_image_service,
+                CachedPOIImageService,
+            )
+
+            assert isinstance(
+                first.poi_image_service.service,
                 POIImageService,
             )
 
-            assert first.poi_service.primary.service.client is client
+            assert first.poi_image_service.service.client is client
 
     asyncio.run(run_test())

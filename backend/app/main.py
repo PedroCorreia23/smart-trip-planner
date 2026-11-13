@@ -21,6 +21,8 @@ from app.logging_config import configure_logging
 from app.services.poi import POIService
 from app.services.poi_cache import CachedPOIService
 from app.services.poi_fallback import FallbackPOIService
+from app.services.poi_image_cache import CachedPOIImageService
+from app.services.poi_images import POIImageService
 from app.services.wikidata_poi import WikidataPOIService
 
 configure_logging()
@@ -51,6 +53,12 @@ async def lifespan(app: FastAPI):
             primary=cached_wikidata_service,
             fallback=POIService(),
             timeout=7.0,
+        )
+
+        app.state.poi_image_service = CachedPOIImageService(
+            service=POIImageService(client),
+            ttl=1800.0,
+            max_entries=256,
         )
 
         yield

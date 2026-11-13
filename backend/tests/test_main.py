@@ -282,7 +282,7 @@ def test_poi_service_uses_shared_http_client(client):
 
     use_case = get_poi_search_use_case(request)
 
-    assert use_case.poi_image_service.client is app.state.http_client
+    assert use_case.poi_image_service.service.client is app.state.http_client
 
 
 @pytest.mark.parametrize(
