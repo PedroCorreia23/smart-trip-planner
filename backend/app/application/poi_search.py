@@ -41,7 +41,10 @@ class POISearchUseCase:
             wikidata_id = poi.wikidata_id
 
             if not wikidata_id:
-                wikidata_id = await self.poi_service.get_wikidata_id(poi.id)
+                wikidata_id = poi.wikidata_id
+
+                if not wikidata_id:
+                    wikidata_id = await self.poi_service.get_wikidata_id(poi.id)
 
             if not wikidata_id:
                 return poi

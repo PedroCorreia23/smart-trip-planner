@@ -403,3 +403,104 @@ async def test_get_pois_without_wikidata_id():
 
     assert len(pois) == 1
     assert pois[0].wikidata_id is None
+
+
+@pytest.mark.asyncio
+async def test_get_pois_excludes_private_places():
+    # Arrange
+    fake_data = {
+        "features": [
+            {
+                "properties": {
+                    "place_id": "public-123",
+                    "name": "Public Park",
+                    "lat": 48.8566,
+                    "lon": 2.3522,
+                    "categories": ["leisure.park"],
+                }
+            },
+            {
+                "properties": {
+                    "place_id": "private-456",
+                    "name": "Private Garden",
+                    "lat": 48.8570,
+                    "lon": 2.3530,
+                    "categories": ["leisure.park"],
+                    "restrictions": {"access": "private"},
+                }
+            },
+        ]
+    }
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = fake_data
+    mock_response.raise_for_status.return_value = None
+
+    with patch("app.services.poi.httpx.AsyncClient") as mock_client:
+        mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
+
+        service = POIService()
+        pois = await service.get_pois(
+            48.8566,
+            2.3522,
+            category="park",
+        )
+
+    # Assert
+    assert len(pois) == 1
+    assert pois[0].id == "public-123"
+    assert pois[0].name == "Public Park"
+
+
+@pytest.mark.asyncio
+async def test_get_pois_removes_duplicates():
+    # Arrange
+    fake_data = {
+        "features": [
+            {
+                "properties": {
+                    "place_id": "123",
+                    "name": "Public Park",
+                    "lat": 48.8566,
+                    "lon": 2.3522,
+                    "categories": ["leisure.park"],
+                }
+            },
+            {
+                "properties": {
+                    "place_id": "456",
+                    "name": "public park",
+                    "lat": 48.8566,
+                    "lon": 2.3522,
+                    "categories": ["leisure.park"],
+                }
+            },
+            {
+                "properties": {
+                    "place_id": "789",
+                    "name": "Public Park",
+                    "lat": 48.8570,
+                    "lon": 2.3530,
+                    "categories": ["leisure.park"],
+                }
+            },
+        ]
+    }
+
+    mock_response = MagicMock()
+    mock_response.json.return_value = fake_data
+    mock_response.raise_for_status.return_value = None
+
+    with patch("app.services.poi.httpx.AsyncClient") as mock_client:
+        mock_client.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
+
+        service = POIService()
+        pois = await service.get_pois(
+            48.8566,
+            2.3522,
+            category="park",
+        )
+
+    # Assert
+    assert len(pois) == 2
+    assert [poi.id for poi in pois] == ["123", "789"]

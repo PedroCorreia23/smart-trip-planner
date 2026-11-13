@@ -36,9 +36,15 @@ class POIService:
                 data = response.json()
 
                 pois = []
+                seen_pois = set()
 
                 for feature in data["features"]:
                     properties = feature.get("properties", {})
+
+                    restrictions = properties.get("restrictions") or {}
+
+                    if restrictions.get("access") == "private":
+                        continue
 
                     name = properties.get("name")
 
@@ -51,6 +57,13 @@ class POIService:
 
                     if not place_id or poi_lat is None or poi_lon is None:
                         continue
+
+                    poi_key = (name.strip().casefold(), poi_lat, poi_lon)
+
+                    if poi_key in seen_pois:
+                        continue
+
+                    seen_pois.add(poi_key)
 
                     categories = properties.get("categories", [])
                     category = categories[0] if categories else "unknown"
