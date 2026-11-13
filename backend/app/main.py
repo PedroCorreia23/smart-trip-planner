@@ -18,6 +18,10 @@ from app.exceptions import (
     LocationNotFoundError,
 )
 from app.logging_config import configure_logging
+from app.services.poi import POIService
+from app.services.poi_cache import CachedPOIService
+from app.services.poi_fallback import FallbackPOIService
+from app.services.wikidata_poi import WikidataPOIService
 
 configure_logging()
 
@@ -26,9 +30,29 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
-    async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
+    async with httpx.AsyncClient(
+        timeout=settings.HTTP_TIMEOUT,
+        headers={
+            "User-Agent": settings.USER_AGENT,
+            "Accept": "application/json",
+        },
+    ) as client:
         app.state.http_client = client
+
+        wikidata_service = WikidataPOIService(client)
+
+        cached_wikidata_service = CachedPOIService(
+            service=wikidata_service,
+            ttl=1800.0,
+            max_entries=128,
+        )
+
+        app.state.poi_service = FallbackPOIService(
+            primary=cached_wikidata_service,
+            fallback=POIService(),
+            timeout=7.0,
+        )
+
         yield
 
 
