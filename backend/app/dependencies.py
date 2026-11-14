@@ -5,8 +5,6 @@ from app.application.trip_search import TripSearchUseCase
 from app.services.currency import CurrencyService
 from app.services.exchange_rate import ExchangeRateService
 from app.services.geocoding import GeocodingService
-from app.services.poi import POIService
-from app.services.poi_images import POIImageService
 from app.services.weather import WeatherService
 
 
@@ -21,9 +19,7 @@ def get_trip_search_use_case() -> TripSearchUseCase:
 
 def get_poi_search_use_case(request: Request) -> POISearchUseCase:
 
-    client = request.app.state.http_client
-
     return POISearchUseCase(
-        poi_service=POIService(),
-        poi_image_service=POIImageService(client),
+        poi_service=request.app.state.poi_service,
+        poi_image_service=request.app.state.poi_image_service,
     )
