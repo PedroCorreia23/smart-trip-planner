@@ -17,6 +17,11 @@ class CachedPOIImageService:
         ttl: float = 1800.0,
         max_entries: int = 256,
     ):
+        self.in_flight: dict[
+            CacheKey,
+            asyncio.Task[CacheValue],
+        ] = {}
+
         if ttl <= 0:
             raise ValueError("TTL must be positive")
 
@@ -39,20 +44,7 @@ class CachedPOIImageService:
         key: CacheKey,
     ) -> tuple[bool, CacheValue]:
         async with self.lock:
-            cached = self.cache.get(key)
-
-            if cached is None:
-                return False, None
-
-            expires_at, value = cached
-
-            if time.monotonic() >= expires_at:
-                del self.cache[key]
-                return False, None
-
-            self.cache.move_to_end(key)
-
-            return True, copy.deepcopy(value)
+            return self._get_cached_unlocked(key)
 
     async def _store(
         self,
@@ -79,14 +71,21 @@ class CachedPOIImageService:
         found, cached = await self._get_cached(key)
 
         if found:
-            if isinstance(cached, str):
-                return cached
+            return cached if isinstance(cached, str) else None
 
-            return None
+        async with self.lock:
+            found, cached = self._get_cached_unlocked(key)
 
-        filename = await self.service.get_image(wikidata_id)
+            if found:
+                return cached if isinstance(cached, str) else None
 
-        await self._store(key, filename)
+            task = self.in_flight.get(key)
+
+            if task is None:
+                task = asyncio.create_task(self._fetch_image(key, wikidata_id))
+                self.in_flight[key] = task
+
+        filename = await asyncio.shield(task)
 
         return filename
 
@@ -99,13 +98,69 @@ class CachedPOIImageService:
         found, cached = await self._get_cached(key)
 
         if found:
-            if isinstance(cached, POIImageInfo):
-                return cached
+            return cached if isinstance(cached, POIImageInfo) else None
 
-            return None
+        async with self.lock:
+            found, cached = self._get_cached_unlocked(key)
 
-        image = await self.service.get_commons_image(filename)
+            if found:
+                return cached if isinstance(cached, POIImageInfo) else None
 
-        await self._store(key, image)
+            task = self.in_flight.get(key)
+
+            if task is None:
+                task = asyncio.create_task(self._fetch_commons_image(key, filename))
+                self.in_flight[key] = task
+
+        image = await asyncio.shield(task)
 
         return image
+
+    async def _fetch_image(
+        self,
+        key: CacheKey,
+        wikidata_id: str,
+    ) -> str | None:
+        try:
+            filename = await self.service.get_image(wikidata_id)
+
+            await self._store(key, filename)
+
+            return filename
+        finally:
+            async with self.lock:
+                self.in_flight.pop(key, None)
+
+    def _get_cached_unlocked(
+        self,
+        key: CacheKey,
+    ) -> tuple[bool, CacheValue]:
+        cached = self.cache.get(key)
+
+        if cached is None:
+            return False, None
+
+        expires_at, value = cached
+
+        if time.monotonic() >= expires_at:
+            del self.cache[key]
+            return False, None
+
+        self.cache.move_to_end(key)
+
+        return True, copy.deepcopy(value)
+
+    async def _fetch_commons_image(
+        self,
+        key: CacheKey,
+        filename: str,
+    ) -> POIImageInfo | None:
+        try:
+            image = await self.service.get_commons_image(filename)
+
+            await self._store(key, image)
+
+            return image
+        finally:
+            async with self.lock:
+                self.in_flight.pop(key, None)

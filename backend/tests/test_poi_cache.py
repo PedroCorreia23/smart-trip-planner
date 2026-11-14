@@ -167,5 +167,4 @@ async def test_concurrent_requests_for_same_key():
     assert len(results) == 2
     assert all(len(result) == 1 for result in results)
 
-    # Current implementation allows duplicate requests.
-    assert calls == 2
+    assert calls == 1

@@ -194,6 +194,121 @@ async def test_concurrent_image_requests():
     )
 
     assert results == ["example.jpg", "example.jpg"]
+    assert calls == 1
 
-    # Current implementation allows duplicate requests.
-    assert calls == 2
+
+@pytest.mark.asyncio
+async def test_rechecks_cache_before_creating_task():
+    backend = AsyncMock()
+    backend.get_image.return_value = "example.jpg"
+
+    service = CachedPOIImageService(backend)
+
+    original_get_cached = service._get_cached
+    injected = False
+
+    async def get_cached_with_interleaving(key):
+        nonlocal injected
+
+        result = await original_get_cached(key)
+
+        if not injected and not result[0]:
+            injected = True
+            await service._store(key, "example.jpg")
+
+        return result
+
+    service._get_cached = get_cached_with_interleaving
+
+    result = await service.get_image("Q2351947")
+
+    assert result == "example.jpg"
+    backend.get_image.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_concurrent_commons_requests():
+    backend = AsyncMock()
+    calls = 0
+
+    async def slow_backend(*args, **kwargs):
+        nonlocal calls
+
+        calls += 1
+        await asyncio.sleep(0.05)
+
+        return make_image()
+
+    backend.get_commons_image.side_effect = slow_backend
+
+    service = CachedPOIImageService(backend)
+
+    results = await asyncio.gather(
+        service.get_commons_image("example.jpg"),
+        service.get_commons_image("example.jpg"),
+    )
+
+    assert len(results) == 2
+    assert results[0].author == "Example Author"
+    assert results[1].author == "Example Author"
+    assert calls == 1
+
+
+@pytest.mark.asyncio
+async def test_failed_image_task_can_be_retried():
+    backend = AsyncMock()
+
+    backend.get_image.side_effect = [
+        ExternalServiceError("Wikidata unavailable"),
+        "coimbra.jpg",
+    ]
+
+    service = CachedPOIImageService(backend)
+
+    with pytest.raises(ExternalServiceError):
+        await service.get_image("Q2351947")
+
+    assert ("wikidata", "Q2351947") not in service.in_flight
+
+    result = await service.get_image("Q2351947")
+
+    assert result == "coimbra.jpg"
+    assert backend.get_image.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_cancelling_waiter_preserves_shared_task():
+    backend = AsyncMock()
+
+    started = asyncio.Event()
+    release = asyncio.Event()
+
+    async def slow_backend(wikidata_id):
+        started.set()
+        await release.wait()
+        return "coimbra.jpg"
+
+    backend.get_image.side_effect = slow_backend
+
+    service = CachedPOIImageService(backend)
+
+    first = asyncio.create_task(service.get_image("Q2351947"))
+
+    await started.wait()
+
+    second = asyncio.create_task(service.get_image("Q2351947"))
+
+    await asyncio.sleep(0)
+
+    first.cancel()
+
+    with pytest.raises(asyncio.CancelledError):
+        await first
+
+    release.set()
+
+    result = await second
+
+    assert result == "coimbra.jpg"
+    assert backend.get_image.await_count == 1
+    assert ("wikidata", "Q2351947") not in service.in_flight
