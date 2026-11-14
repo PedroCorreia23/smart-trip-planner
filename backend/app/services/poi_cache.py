@@ -73,17 +73,10 @@ class CachedPOIService:
         key = (lat, lon, radius, category)
 
         async with self.lock:
-            cached = self.cache.get(key)
+            found, cached = self._get_cached_unlocked(key)
 
-            if cached is not None:
-                expires_at, pois = cached
-
-                if time.monotonic() < expires_at:
-                    self.cache.move_to_end(key)
-
-                    return [poi.model_copy(deep=True) for poi in pois]
-
-                del self.cache[key]
+            if found:
+                return cached
 
             task = self.in_flight.get(key)
 
@@ -97,7 +90,6 @@ class CachedPOIService:
                         category,
                     )
                 )
-
                 self.in_flight[key] = task
 
         result = await asyncio.shield(task)
@@ -109,3 +101,22 @@ class CachedPOIService:
         place_id: str,
     ) -> str | None:
         return await self.service.get_wikidata_id(place_id)
+
+    def _get_cached_unlocked(
+        self,
+        key: CacheKey,
+    ) -> tuple[bool, list[POIInfo] | None]:
+        cached = self.cache.get(key)
+
+        if cached is None:
+            return False, None
+
+        expires_at, pois = cached
+
+        if time.monotonic() >= expires_at:
+            del self.cache[key]
+            return False, None
+
+        self.cache.move_to_end(key)
+
+        return True, [poi.model_copy(deep=True) for poi in pois]
