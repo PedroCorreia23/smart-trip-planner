@@ -3,6 +3,8 @@ import "./App.css"
 import TripSearchForm from "./components/TripSearchForm"
 import TripResults  from "./components/TripResults"
 import POIResults from "./components/POIResults"
+import POIMap from "./components/POIMap"
+
 
 export default function Home() {
     const [tripResult, setTripResult] = useState(null)
@@ -135,6 +137,14 @@ export default function Home() {
                         onCategoryChange={setPoiCategory}
                         loading={poiLoading}
                         error={poiError}
+                        selectedPOIs={selectedPOIs}
+                        onTogglePOI={handleTogglePOI}
+                    />
+
+                    <POIMap
+                        lat={tripResult.destination_coordinates.lat}
+                        lon={tripResult.destination_coordinates.lon}
+                        pois={poiResults}
                         selectedPOIs={selectedPOIs}
                         onTogglePOI={handleTogglePOI}
                     />
