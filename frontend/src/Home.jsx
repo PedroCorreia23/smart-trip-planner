@@ -15,6 +15,8 @@ export default function Home() {
 
     const [poiCategory, setPoiCategory] = useState("museum")
 
+    const [selectedPOIs, setSelectedPOIs] = useState([])
+
     const poiCache = useRef({})
 
     useEffect(() => {
@@ -83,16 +85,37 @@ export default function Home() {
             }
         }
         fetchPOIs()
+    
         return () => {
             controller.abort()
         }
         
     }, [tripResult, poiCategory])
+
+    function handleTripSuccess(data) {
+        setTripResult(data)
+        setSelectedPOIs([])
+    }
+
+    function handleTogglePOI(poi) {
+        setSelectedPOIs((current) => {
+            const isSelected = current.some(
+                (selected) => selected.id === poi.id
+            )
+
+                if (isSelected) {
+                    return current.filter(
+                    (selected) => selected.id !== poi.id)
+                }
+
+                return [...current, poi]
+            })
+        }
   
     return (
         
         <div className="home-page">
-            <TripSearchForm setTripResult={setTripResult}
+            <TripSearchForm setTripResult={handleTripSuccess}
                             loadingState={loadingState}
                             setLoadingState={setLoadingState}
                             setErrorState={setErrorState} />
@@ -112,6 +135,8 @@ export default function Home() {
                         onCategoryChange={setPoiCategory}
                         loading={poiLoading}
                         error={poiError}
+                        selectedPOIs={selectedPOIs}
+                        onTogglePOI={handleTogglePOI}
                     />
                 </>
             )}

@@ -1,3 +1,4 @@
+
 const categories = [
   { value: "museum", label: "Museums" },
   { value: "monument", label: "Monuments" },
@@ -5,7 +6,15 @@ const categories = [
   { value: "attraction", label: "Attractions" },
 ]
 
-export default function POIResults({ pois, category, onCategoryChange, loading, error }) {
+export default function POIResults({
+  pois,
+  category,
+  onCategoryChange,
+  loading,
+  error,
+  selectedPOIs,
+  onTogglePOI,
+}) {
   return (
     <section className="poi-results" aria-labelledby="poi-heading">
       <h2 id="poi-heading">Discover Places to Visit</h2>
@@ -23,14 +32,14 @@ export default function POIResults({ pois, category, onCategoryChange, loading, 
           </button>
         ))}
       </div>
-      
+
       {loading ? (
-          <div className="poi-loading-container" role="status">
-            <p>Loading places...</p>
-          </div>
+        <div className="poi-loading-container" role="status">
+          <p>Loading places...</p>
+        </div>
       ) : error ? (
-          <p role="alert">{error}</p>
-      ) :pois.length === 0 ? (
+        <p role="alert">{error}</p>
+      ) : pois.length === 0 ? (
         <p>No places found near this destination.</p>
       ) : (
         <div className="poi-grid">
@@ -49,6 +58,18 @@ export default function POIResults({ pois, category, onCategoryChange, loading, 
 
               <h3>{poi.name}</h3>
               <p>{poi.category}</p>
+
+              <label>
+                <input
+                  type="checkbox"
+                  checked={selectedPOIs.some(
+                    (selected) => selected.id === poi.id
+                  )}
+                  onChange={() => onTogglePOI(poi)}
+                />
+                Select this place
+              </label>
+
               {poi.image_url && (
                 <div className="poi-attribution">
                   {poi.image_author && (
@@ -69,11 +90,11 @@ export default function POIResults({ pois, category, onCategoryChange, loading, 
                     </a>
                   )}
                 </div>
-            )}
+              )}
             </div>
           ))}
         </div>
       )}
     </section>
-  );
+  )
 }
