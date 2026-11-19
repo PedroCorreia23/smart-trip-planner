@@ -1,3 +1,4 @@
+from app.application.itinerary_generation import calculate_daily_capacity
 from app.domain.distance import haversine_distance
 
 
@@ -19,13 +20,17 @@ def find_nearest_poi(current_poi, remaining_pois):
 
     return poi_mais_proximo
 
+
 def calculate_daily_capacity(num_pois: int, num_days: int) -> list[int]:
     if num_days <= 0:
         raise ValueError("Number of days must be positive.")
 
     base, remainder = divmod(num_pois, num_days)
 
-    return [
-        base + (1 if day < remainder else 0)
-        for day in range(num_days)
-    ]
+    return [base + (1 if day < remainder else 0) for day in range(num_days)]
+
+
+def test_daily_capacity_more_days_than_pois():
+    result = calculate_daily_capacity(2, 5)
+
+    assert result == [1, 1, 0, 0, 0]
