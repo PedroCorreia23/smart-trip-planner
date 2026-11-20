@@ -66,3 +66,7 @@ def test_find_nearest_poi_single_candidate():
     nearest = find_nearest_poi(louvre, [eiffel])
 
     assert nearest == eiffel
+
+def test_daily_capacity_invalid_days():
+    with pytest.raises(ValueError, match="Number of days must be positive"):
+        calculate_daily_capacity(5, 0)
