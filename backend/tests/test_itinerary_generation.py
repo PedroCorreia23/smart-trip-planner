@@ -70,3 +70,8 @@ def test_find_nearest_poi_single_candidate():
 def test_daily_capacity_invalid_days():
     with pytest.raises(ValueError, match="Number of days must be positive"):
         calculate_daily_capacity(5, 0)
+
+def test_daily_capacity_even_distribution():
+    result = calculate_daily_capacity(6, 3)
+
+    assert result == [2, 2, 2]
