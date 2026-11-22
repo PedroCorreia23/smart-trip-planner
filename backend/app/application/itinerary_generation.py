@@ -1,24 +1,27 @@
-from app.application.itinerary_generation import calculate_daily_capacity
 from app.domain.distance import haversine_distance
+from app.domain.schemas import POIInfo
 
 
-def find_nearest_poi(current_poi, remaining_pois):
-    menor_distancia = float("inf")
-    poi_mais_proximo = None
+def find_nearest_poi(
+    current_poi: POIInfo,
+    remaining_pois: list[POIInfo],
+) -> POIInfo | None:
+    min_distance = float("inf")
+    nearest_poi = None
 
     for poi in remaining_pois:
-        distancia = haversine_distance(
+        distance = haversine_distance(
             current_poi.lat,
             current_poi.lon,
             poi.lat,
             poi.lon,
         )
 
-        if distancia < menor_distancia:
-            menor_distancia = distancia
-            poi_mais_proximo = poi
+        if distance < min_distance:
+            min_distance = distance
+            nearest_poi = poi
 
-    return poi_mais_proximo
+    return nearest_poi
 
 
 def calculate_daily_capacity(num_pois: int, num_days: int) -> list[int]:
@@ -30,7 +33,13 @@ def calculate_daily_capacity(num_pois: int, num_days: int) -> list[int]:
     return [base + (1 if day < remainder else 0) for day in range(num_days)]
 
 
-def test_daily_capacity_more_days_than_pois():
-    result = calculate_daily_capacity(2, 5)
+def group_pois_by_day(
+    pois: list[POIInfo],
+    num_days: int,
+) -> list[list[POIInfo]]:
+    capacities = calculate_daily_capacity(len(pois), num_days)
 
-    assert result == [1, 1, 0, 0, 0]
+    remaining_pois = pois.copy()
+    itinerary = []
+
+    # Continuar aqui

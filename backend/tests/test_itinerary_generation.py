@@ -1,4 +1,9 @@
-from app.application.itinerary_generation import find_nearest_poi
+import pytest
+
+from app.application.itinerary_generation import (
+    calculate_daily_capacity,
+    find_nearest_poi,
+)
 from app.domain.schemas import POIInfo
 
 
@@ -67,11 +72,31 @@ def test_find_nearest_poi_single_candidate():
 
     assert nearest == eiffel
 
+
 def test_daily_capacity_invalid_days():
     with pytest.raises(ValueError, match="Number of days must be positive"):
         calculate_daily_capacity(5, 0)
+
 
 def test_daily_capacity_even_distribution():
     result = calculate_daily_capacity(6, 3)
 
     assert result == [2, 2, 2]
+
+
+def test_daily_capacity_with_remainder():
+    result = calculate_daily_capacity(7, 3)
+
+    assert result == [3, 2, 2]
+
+
+def test_daily_capacity_more_days_than_pois():
+    result = calculate_daily_capacity(2, 5)
+
+    assert result == [1, 1, 0, 0, 0]
+
+
+def test_daily_capacity_no_pois():
+    result = calculate_daily_capacity(0, 3)
+
+    assert result == [0, 0, 0]
