@@ -42,4 +42,23 @@ def group_pois_by_day(
     remaining_pois = pois.copy()
     itinerary = []
 
-    # Continuar aqui
+    for capacity in capacities:
+        day_pois = []
+
+        if capacity > 0:
+            current_poi = remaining_pois.pop(0)
+            day_pois.append(current_poi)
+
+            for _ in range(capacity - 1):
+                nearest_poi = find_nearest_poi(
+                    current_poi,
+                    remaining_pois,
+                )
+
+                day_pois.append(nearest_poi)
+                remaining_pois.remove(nearest_poi)
+                current_poi = nearest_poi
+
+        itinerary.append(day_pois)
+
+    return itinerary
