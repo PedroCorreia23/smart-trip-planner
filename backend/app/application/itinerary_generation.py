@@ -1,4 +1,3 @@
-
 from datetime import timedelta
 
 from app.domain.distance import haversine_distance
@@ -41,10 +40,7 @@ def calculate_daily_capacity(
 
     base, remainder = divmod(num_pois, num_days)
 
-    return [
-        base + (1 if day < remainder else 0)
-        for day in range(num_days)
-    ]
+    return [base + (1 if day < remainder else 0) for day in range(num_days)]
 
 
 def group_pois_by_day(
@@ -76,30 +72,6 @@ def group_pois_by_day(
         itinerary.append(day_pois)
 
     return itinerary
-
-
-class ItineraryGenerationUseCase:
-    def execute(self, request: ItineraryRequest) -> ItineraryResponse:
-        num_days = (request.end_date - request.start_date).days + 1
-
-        grouped_pois = group_pois_by_day(
-            request.pois,
-            num_days,
-        )
-
-        days = []
-
-        for index, day_pois in enumerate(grouped_pois):
-            current_date = request.start_date + timedelta(days=index)
-
-            itinerary_day = ItineraryDay(
-                day=current_date,
-                pois=day_pois,
-            )
-
-            days.append(itinerary_day)
-
-        return ItineraryResponse(days=days)
 
 
 class ItineraryGenerationUseCase:
