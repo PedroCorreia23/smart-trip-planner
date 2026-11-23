@@ -7,11 +7,18 @@ from fastapi import Depends, FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.application.itinerary_generation import ItineraryGenerationUseCase
 from app.application.poi_search import POISearchUseCase
 from app.application.trip_search import TripSearchUseCase
 from app.config import settings
 from app.dependencies import get_poi_search_use_case, get_trip_search_use_case
-from app.domain.schemas import POIInfo, TripQuery, TripSearchResponse
+from app.domain.schemas import (
+    ItineraryRequest,
+    ItineraryResponse,
+    POIInfo,
+    TripQuery,
+    TripSearchResponse,
+)
 from app.exceptions import (
     CurrencyUnavailableError,
     ExternalServiceError,
@@ -130,3 +137,9 @@ async def location_not_found_handler(request: Request, exc: LocationNotFoundErro
 async def currency_unavailable_handler(request: Request, exc: CurrencyUnavailableError):
     logger.warning("Currency unavailable: %s", exc)
     return JSONResponse(status_code=502, content={"detail": str(exc)})
+
+
+@app.post("/itineraries/generate", response_model=ItineraryResponse)
+def generate_itinerary(request: ItineraryRequest) -> ItineraryResponse:
+    use_case = ItineraryGenerationUseCase()
+    return use_case.execute(request)
