@@ -100,3 +100,27 @@ class ItineraryGenerationUseCase:
             days.append(itinerary_day)
 
         return ItineraryResponse(days=days)
+
+
+class ItineraryGenerationUseCase:
+    def execute(self, request: ItineraryRequest) -> ItineraryResponse:
+        num_days = (request.end_date - request.start_date).days + 1
+
+        grouped_pois = group_pois_by_day(
+            request.pois,
+            num_days,
+        )
+
+        days = []
+
+        for index, day_pois in enumerate(grouped_pois):
+            current_date = request.start_date + timedelta(days=index)
+
+            itinerary_day = ItineraryDay(
+                day=current_date,
+                pois=day_pois,
+            )
+
+            days.append(itinerary_day)
+
+        return ItineraryResponse(days=days)
