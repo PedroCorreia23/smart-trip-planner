@@ -1,6 +1,6 @@
 from datetime import date
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 
 class TripQuery(BaseModel):
@@ -76,3 +76,25 @@ class POIImageInfo(BaseModel):
     author: str | None = None
     license: str | None = None
     description_url: str | None = None
+
+
+class ItineraryRequest(BaseModel):
+    start_date: date
+    end_date: date
+    pois: list[POIInfo]
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.end_date < self.start_date:
+            raise ValueError("End date must be on or after start date.")
+
+        return self
+
+
+class ItineraryDay(BaseModel):
+    day: date
+    pois: list[POIInfo]
+
+
+class ItineraryResponse(BaseModel):
+    days: list[ItineraryDay]
