@@ -1,10 +1,11 @@
+
 import { useState, useEffect, useRef } from "react"
 import "./App.css"
 import TripSearchForm from "./components/TripSearchForm"
-import TripResults  from "./components/TripResults"
+import TripResults from "./components/TripResults"
 import POIResults from "./components/POIResults"
 import POIMap from "./components/POIMap"
-
+import ItineraryResults from "./components/ItineraryResults"
 
 export default function Home() {
     const [tripResult, setTripResult] = useState(null)
@@ -14,12 +15,18 @@ export default function Home() {
     const [poiResults, setPoiResults] = useState([])
     const [poiLoading, setPoiLoading] = useState(false)
     const [poiError, setPoiError] = useState(null)
-
     const [poiCategory, setPoiCategory] = useState("museum")
 
     const [selectedPOIs, setSelectedPOIs] = useState([])
 
+    // Itinerary generation states
+    const [itinerary, setItinerary] = useState(null)
+    const [itineraryLoading, setItineraryLoading] = useState(false)
+    const [itineraryError, setItineraryError] = useState("")
+
     const poiCache = useRef({})
+    const itineraryController = useRef(null)
+    const [selectedDay, setSelectedDay] = useState(null)
 
     useEffect(() => {
         if (!tripResult) {
@@ -41,92 +48,192 @@ export default function Home() {
         }
 
         const fetchPOIs = async () => {
-
             try {
-
                 setPoiLoading(true)
                 setPoiError(null)
                 setPoiResults([])
 
                 const url = `${import.meta.env.VITE_API_BASE_URL}/pois?lat=${lat}&lon=${lon}&radius=5000&category=${poiCategory}`
-                const response = await fetch(url, {signal: controller.signal})
-                
+
+                const response = await fetch(url, {
+                    signal: controller.signal,
+                })
+
                 if (!response.ok) {
                     let errorMessage = "An unexpected error occurred."
 
                     try {
                         const errorData = await response.json()
-                        errorMessage = errorData.detail || errorMessage
 
-                        
+                        if (typeof errorData.detail === "string") {
+                            errorMessage = errorData.detail
+                        }
                     } catch {
-                        // Keep the default error message if JSON parsing fails
-
+                        // Keep the default error message
                     }
 
                     throw new Error(errorMessage)
                 }
-                    
+
                 const data = await response.json()
+
                 if (!controller.signal.aborted) {
                     poiCache.current[cacheKey] = data
                     setPoiResults(data)
                 }
-
             } catch (error) {
                 if (controller.signal.aborted) {
                     return
                 }
+
                 console.error("Failed to fetch POIs:", error)
                 setPoiError(error.message)
-                
-            }finally {
+            } finally {
                 if (!controller.signal.aborted) {
                     setPoiLoading(false)
-                } 
+                }
             }
         }
+
         fetchPOIs()
-    
+
         return () => {
             controller.abort()
         }
-        
     }, [tripResult, poiCategory])
 
+    useEffect(() => {
+        return () => {
+            itineraryController.current?.abort()
+        }
+    }, [])
+
+    function clearItinerary() {
+        itineraryController.current?.abort()
+        itineraryController.current = null
+
+        setItinerary(null)
+        setItineraryError("")
+        setItineraryLoading(false)
+        setSelectedDay(null)
+    }
+
     function handleTripSuccess(data) {
+        clearItinerary()
         setTripResult(data)
         setSelectedPOIs([])
     }
 
     function handleTogglePOI(poi) {
+        clearItinerary()
+
         setSelectedPOIs((current) => {
             const isSelected = current.some(
                 (selected) => selected.id === poi.id
             )
 
-                if (isSelected) {
-                    return current.filter(
-                    (selected) => selected.id !== poi.id)
+            if (isSelected) {
+                return current.filter(
+                    (selected) => selected.id !== poi.id
+                )
+            }
+
+            return [...current, poi]
+        })
+    }
+
+    async function handleGenerateItinerary() {
+        if (
+            !tripResult ||
+            selectedPOIs.length === 0 ||
+            itineraryLoading
+        ) {
+            return
+        }
+
+        const controller = new AbortController()
+        itineraryController.current = controller
+
+        setItineraryLoading(true)
+        setItineraryError("")
+        setItinerary(null)
+
+        try {
+            const payload = {
+                start_date: tripResult.trip_details.start_date,
+                end_date: tripResult.trip_details.end_date,
+                pois: selectedPOIs,
+            }
+
+            const response = await fetch(
+                `${import.meta.env.VITE_API_BASE_URL}/itineraries/generate`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal,
+                }
+            )
+
+            if (!response.ok) {
+                let errorMessage = "Failed to generate itinerary."
+
+                try {
+                    const errorData = await response.json()
+
+                    if (typeof errorData.detail === "string") {
+                        errorMessage = errorData.detail
+                    }
+                } catch {
+                    // Keep the default error message
                 }
 
-                return [...current, poi]
-            })
+                throw new Error(errorMessage)
+            }
+
+            const data = await response.json()
+
+            if (!controller.signal.aborted) {
+                setItinerary(data)
+                setSelectedDay(data.days.length > 0 ? 0 : null)
+            }
+        } catch (error) {
+            if (controller.signal.aborted) {
+                return
+            }
+
+            console.error("Failed to generate itinerary:", error)
+            setItineraryError(error.message)
+        } finally {
+            if (!controller.signal.aborted) {
+                setItineraryLoading(false)
+                itineraryController.current = null
+            }
         }
-  
+    }
+
+    const activeDayPOIs =
+    selectedDay !== null
+        ? itinerary?.days[selectedDay]?.pois ?? []
+        : []
+
     return (
-        
         <div className="home-page">
-            <TripSearchForm setTripResult={handleTripSuccess}
-                            loadingState={loadingState}
-                            setLoadingState={setLoadingState}
-                            setErrorState={setErrorState} />
-            
+            <TripSearchForm
+                setTripResult={handleTripSuccess}
+                loadingState={loadingState}
+                setLoadingState={setLoadingState}
+                setErrorState={setErrorState}
+            />
+
             {errorState && (
                 <p className="error-message" role="alert">
                     {errorState}
                 </p>
             )}
+
             {tripResult && (
                 <>
                     <TripResults tripResult={tripResult} />
@@ -147,7 +254,57 @@ export default function Home() {
                         pois={poiResults}
                         selectedPOIs={selectedPOIs}
                         onTogglePOI={handleTogglePOI}
+                        activeDayPOIs={activeDayPOIs}
                     />
+
+                    <section className="itinerary-generator">
+                        <h2>Generate Your Itinerary</h2>
+
+                        <p>
+                            {selectedPOIs.length} places selected
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={handleGenerateItinerary}
+                            disabled={
+                                selectedPOIs.length === 0 ||
+                                itineraryLoading
+                            }
+                        >
+                            {itineraryLoading
+                                ? "Generating..."
+                                : "Generate Itinerary"}
+                        </button>
+
+                        {itineraryLoading && (
+                            <p role="status">
+                                Generating your itinerary...
+                            </p>
+                        )}
+
+                        {itineraryError && (
+                            <p className="error-message" role="alert">
+                                {itineraryError}
+                            </p>
+                        )}
+
+                        {itinerary && (
+                        <>
+                            <p role="status">
+                                Itinerary generated successfully!
+                                {" "}
+                                {itinerary.days.length} days created.
+                            </p>
+
+                            <ItineraryResults
+                                itinerary={itinerary}
+                                selectedDay={selectedDay}
+                                onSelectDay={setSelectedDay}
+                            />
+                        </>
+                    )}
+                    </section>  
                 </>
             )}
         </div>
