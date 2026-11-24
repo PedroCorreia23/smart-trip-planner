@@ -26,6 +26,7 @@ export default function Home() {
 
     const poiCache = useRef({})
     const itineraryController = useRef(null)
+    const [selectedDay, setSelectedDay] = useState(null)
 
     useEffect(() => {
         if (!tripResult) {
@@ -114,6 +115,7 @@ export default function Home() {
         setItinerary(null)
         setItineraryError("")
         setItineraryLoading(false)
+        setSelectedDay(null)
     }
 
     function handleTripSuccess(data) {
@@ -195,6 +197,7 @@ export default function Home() {
 
             if (!controller.signal.aborted) {
                 setItinerary(data)
+                setSelectedDay(data.days.length > 0 ? 0 : null)
             }
         } catch (error) {
             if (controller.signal.aborted) {
@@ -210,6 +213,11 @@ export default function Home() {
             }
         }
     }
+
+    const activeDayPOIs =
+    selectedDay !== null
+        ? itinerary?.days[selectedDay]?.pois ?? []
+        : []
 
     return (
         <div className="home-page">
@@ -246,6 +254,7 @@ export default function Home() {
                         pois={poiResults}
                         selectedPOIs={selectedPOIs}
                         onTogglePOI={handleTogglePOI}
+                        activeDayPOIs={activeDayPOIs}
                     />
 
                     <section className="itinerary-generator">
@@ -288,7 +297,11 @@ export default function Home() {
                                 {itinerary.days.length} days created.
                             </p>
 
-                            <ItineraryResults itinerary={itinerary} />
+                            <ItineraryResults
+                                itinerary={itinerary}
+                                selectedDay={selectedDay}
+                                onSelectDay={setSelectedDay}
+                            />
                         </>
                     )}
                     </section>  

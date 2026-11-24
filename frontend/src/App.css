@@ -630,3 +630,34 @@
         font-size: 14px;
     }
 }
+
+/* Active itinerary day markers */
+
+.poi-map-marker--active-day .poi-map-marker-dot {
+    background: #f97316;
+    border-color: white;
+    width: 28px;
+    height: 28px;
+}
+
+.itinerary-day-select {
+    width: 100%;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+
+.itinerary-day-select:hover {
+    background: #eff6ff;
+}
+
+.itinerary-day--active {
+    background: #fff7ed;
+    box-shadow: inset 4px 0 0 #f97316;
+}
+
+.itinerary-day-select:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: -3px;
+}

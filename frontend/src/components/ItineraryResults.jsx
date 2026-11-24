@@ -9,8 +9,7 @@ function formatItineraryDate(dateString) {
         timeZone: "UTC",
     }).format(date)
 }
-
-export default function ItineraryResults({ itinerary }) {
+export default function ItineraryResults({itinerary, selectedDay, onSelectDay, }) {
     if (!itinerary?.days) {
         return null
     }
@@ -34,22 +33,27 @@ export default function ItineraryResults({ itinerary }) {
                         key={day.day}
                         className="itinerary-day"
                     >
-                        <div className="itinerary-day-header">
-                            <div>
-                                <h3>Day {index + 1}</h3>
+                    <button
+                        type="button"
+                        className={`itinerary-day-header itinerary-day-select ${
+                            selectedDay === index ? "itinerary-day--active" : ""
+                        }`}
+                        onClick={() => onSelectDay(index)}
+                        aria-pressed={selectedDay === index}
+                    >
+                        <div>
+                            <h3>Day {index + 1}</h3>
 
-                                <p className="itinerary-date">
-                                    {formatItineraryDate(day.day)}
-                                </p>
-                            </div>
-
-                            <span className="itinerary-day-count">
-                                {day.pois.length}{" "}
-                                {day.pois.length === 1
-                                    ? "place"
-                                    : "places"}
-                            </span>
+                            <p className="itinerary-date">
+                                {formatItineraryDate(day.day)}
+                            </p>
                         </div>
+
+                        <span className="itinerary-day-count">
+                            {day.pois.length}{" "}
+                            {day.pois.length === 1 ? "place" : "places"}
+                        </span>
+                    </button>
 
                         {day.pois.length === 0 ? (
                             <p className="itinerary-empty">
