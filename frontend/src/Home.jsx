@@ -5,7 +5,7 @@ import TripSearchForm from "./components/TripSearchForm"
 import TripResults from "./components/TripResults"
 import POIResults from "./components/POIResults"
 import POIMap from "./components/POIMap"
-
+import ItineraryResults from "./components/ItineraryResults"
 
 export default function Home() {
     const [tripResult, setTripResult] = useState(null)
@@ -281,13 +281,17 @@ export default function Home() {
                         )}
 
                         {itinerary && (
+                        <>
                             <p role="status">
                                 Itinerary generated successfully!
                                 {" "}
                                 {itinerary.days.length} days created.
                             </p>
-                        )}
-                    </section>
+
+                            <ItineraryResults itinerary={itinerary} />
+                        </>
+                    )}
+                    </section>  
                 </>
             )}
         </div>
