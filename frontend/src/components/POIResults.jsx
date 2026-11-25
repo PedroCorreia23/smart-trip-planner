@@ -15,6 +15,7 @@ export default function POIResults({
   selectedPOIs,
   onTogglePOI,
 }) {
+  const INITIAL_VISIBLE_COUNT = 6
   return (
     <section className="poi-results" aria-labelledby="poi-heading">
       <h2 id="poi-heading">Discover Places to Visit</h2>
@@ -49,7 +50,7 @@ export default function POIResults({
         <p>No places found near this destination.</p>
       ) : (
         <div className="poi-grid">
-          {pois.map((poi) => {
+          {pois.slice(0, INITIAL_VISIBLE_COUNT).map((poi) => {
             const isSelected = selectedPOIs.some(
               (selected) => selected.id === poi.id
             )
