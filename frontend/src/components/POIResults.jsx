@@ -1,10 +1,14 @@
 
+import { useState } from "react"
+
 const categories = [
   { value: "museum", label: "Museums" },
   { value: "monument", label: "Monuments" },
   { value: "park", label: "Parks" },
   { value: "attraction", label: "Attractions" },
 ]
+
+const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT)
 
 export default function POIResults({
   pois,
@@ -50,7 +54,7 @@ export default function POIResults({
         <p>No places found near this destination.</p>
       ) : (
         <div className="poi-grid">
-          {pois.slice(0, INITIAL_VISIBLE_COUNT).map((poi) => {
+          {pois.slice(0, visibleCount).map((poi) => {
             const isSelected = selectedPOIs.some(
               (selected) => selected.id === poi.id
             )
