@@ -21,6 +21,14 @@ export default function POIResults({
 }) {
   const INITIAL_VISIBLE_COUNT = 6
   return (
+    {!loading && !error && visibleCount < pois.length && (
+  <button
+    type="button"
+    onClick={() => setVisibleCount((prev) => prev + 6)}
+  >
+    Load More
+  </button>
+)}
     <section className="poi-results" aria-labelledby="poi-heading">
       <h2 id="poi-heading">Discover Places to Visit</h2>
 
